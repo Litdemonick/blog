@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Inicio - Noticias{% endblock %}
+{% block content %}
+<h1>Últimas noticias & rumores</h1>
+{% for p in posts %}
+  <div class="card my-3">
+    <div class="card-body">
+      <h3><a href="{{ p.get_absolute_url }}">{{ p.title }}</a></h3>
+      <small>por {{ p.author.username }} · {{ p.created|date:"d/m/Y H:i" }}</small>
+      {% if p.cover %}<img src="{{ p.cover.url }}" class="img-fluid my-2" alt="cover">{% endif %}
+      <p>{{ p.excerpt }}</p>
+      <div>
+        <strong>⭐ {{ p.average_rating }}</strong>
+        {% for t in p.tags.all %}<a href="{% url 'blog:post_by_tag' t.slug %}" class="badge text-bg-secondary">{{ t.name }}</a>{% endfor %}
+      </div>
+    </div>
+  </div>
+{% empty %}
+<p>No hay publicaciones.</p>
+{% endfor %}
+{% include 'partials/_pagination.html' %}
+{% endblock %}

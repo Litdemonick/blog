@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Mi perfil</h2>
+{% if user.profile.avatar %}<img src="{{ user.profile.avatar.url }}" width="96" class="rounded-circle mb-2">{% endif %}
+<p><strong>Usuario:</strong> {{ user.username }}</p>
+<p><strong>Email:</strong> {{ user.email }}</p>
+<p><strong>Bio:</strong> {{ user.profile.bio|default:"(sin bio)" }}</p>
+<a href="{% url 'blog:profile_edit' %}" class="btn btn-primary">Editar perfil</a>
+{% endblock %}
