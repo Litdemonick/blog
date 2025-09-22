@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
-from ckeditor_uploader.fields import RichTextUploadingField  # <- con uploader
+from ckeditor_uploader.fields import RichTextUploadingField
 from taggit.managers import TaggableManager
 
 
@@ -55,7 +55,7 @@ class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     cover = models.ImageField(upload_to='covers/', blank=True, null=True)
     excerpt = models.CharField(max_length=300, blank=True)
-    content = RichTextUploadingField()  # editor con subida de archivos/imágenes
+    content = RichTextUploadingField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     updated = models.DateTimeField(auto_now=True)
@@ -72,16 +72,12 @@ class Post(models.Model):
         return reverse('blog:post_detail', args=[self.slug])
 
     def save(self, *args, **kwargs):
-        """
-        Genera slug si no existe. Si el slug ya está tomado, añade un sufijo -2, -3, ...
-        para garantizar unicidad sin romper unique=True.
-        """
+        """Genera slug único automáticamente."""
         if not self.slug:
             base = slugify(self.title)[:200] or 'post'
             candidate = base
             i = 2
             while Post.objects.filter(slug=candidate).exclude(pk=self.pk).exists():
-                # recorta para dejar espacio al sufijo
                 candidate = f"{base[:200 - len(str(i)) - 1]}-{i}"
                 i += 1
             self.slug = candidate
@@ -91,59 +87,56 @@ class Post(models.Model):
     def average_rating(self):
         agg = self.reviews.aggregate(avg=models.Avg('rating'))
         return round(agg['avg'] or 0, 2)
-    
+
     @property
     def total_reviews(self):
         return self.reviews.count()
-
 
 
 # ----------------------------
 # Comentarios (moderados por autor del post)
 # ----------------------------
 class Comment(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
-    # TEMPORAL: permitir NULL para backfill
-    author = models.ForeignKey(User, on_delete=models.SET_NULL,
-                               null=True, blank=True, related_name='comments')
+    STATUS_CHOICES = [
+        ("pending", "Pendiente"),
+        ("visible", "Visible"),
+        ("hidden", "Oculto"),
+        ("blocked", "Bloqueado"),
+    ]
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
+    author = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="comments"
+    )
     text = models.TextField()
-    is_approved = models.BooleanField(default=False)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['-created']
-
-
-class ReviewVote(models.Model):
-    VOTE_CHOICES = (
-        ('like', '👍'),
-        ('dislike', '👎'),
-    )
-
-    review = models.ForeignKey('Review', on_delete=models.CASCADE, related_name='votes')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_votes')
-    vote = models.CharField(max_length=7, choices=VOTE_CHOICES)
-
-    class Meta:
-        unique_together = ('review', 'user')  # un usuario no puede votar 2 veces la misma review
+        ordering = ["-created"]
 
     def __str__(self):
-        return f"{self.user.username} → {self.vote} en {self.review}"
+        return f"Comentario de {self.author} en {self.post}"
 
 
 # ----------------------------
-# Reviews 1..5 únicas por (user, post)
-# ----------------------------
-# ----------------------------
-# Reviews 1..5 únicas por (user, post)
+# Reseñas (con rating y moderación)
 # ----------------------------
 class Review(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pendiente"),
+        ("visible", "Visible"),
+        ("hidden", "Oculto"),
+        ("blocked", "Bloqueado"),
+    ]
+
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     rating = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
     comment = models.TextField(blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -153,9 +146,8 @@ class Review(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.rating}★ de {self.user} en {self.post}'
+        return f"{self.user} – {self.rating}★ – {self.get_status_display()}"
 
-    # ✅ Contadores de likes y dislikes
     @property
     def likes_count(self):
         return self.votes.filter(vote="like").count()
@@ -163,3 +155,36 @@ class Review(models.Model):
     @property
     def dislikes_count(self):
         return self.votes.filter(vote="dislike").count()
+
+    
+class PostBlock(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="blocks")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_in_posts")
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("post", "user")
+
+    def __str__(self):
+        return f"{self.user} bloqueado en {self.post}"
+
+
+
+# ----------------------------
+# Votos en reseñas (like / dislike)
+# ----------------------------
+class ReviewVote(models.Model):
+    VOTE_CHOICES = (
+        ('like', '👍'),
+        ('dislike', '👎'),
+    )
+
+    review = models.ForeignKey(Review, on_delete=models.CASCADE, related_name='votes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_votes')
+    vote = models.CharField(max_length=7, choices=VOTE_CHOICES)
+
+    class Meta:
+        unique_together = ('review', 'user')
+
+    def __str__(self):
+        return f"{self.user.username} → {self.vote} en {self.review}"
