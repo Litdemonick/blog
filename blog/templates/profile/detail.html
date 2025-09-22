@@ -1,9 +1,38 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Mi perfil</h2>
-{% if user.profile.avatar %}<img src="{{ user.profile.avatar.url }}" width="96" class="rounded-circle mb-2">{% endif %}
-<p><strong>Usuario:</strong> {{ user.username }}</p>
-<p><strong>Email:</strong> {{ user.email }}</p>
-<p><strong>Bio:</strong> {{ user.profile.bio|default:"(sin bio)" }}</p>
-<a href="{% url 'blog:profile_edit' %}" class="btn btn-primary">Editar perfil</a>
+<div class="container mt-5" style="max-width: 700px;">
+  <div class="card shadow-sm p-4 rounded-3">
+    <div class="text-center">
+      <h2 class="mb-4">Mi perfil</h2>
+
+      {% if user.profile.avatar %}
+        <img src="{{ user.profile.avatar.url }}" width="140" height="140" 
+             class="rounded-circle mb-3 border border-3 shadow-sm">
+      {% else %}
+        <img src="https://via.placeholder.com/140?text=Sin+Foto" width="140" height="140"
+             class="rounded-circle mb-3 border border-3 shadow-sm" alt="Avatar por defecto">
+      {% endif %}
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <p><strong>👤 Usuario:</strong> {{ user.username }}</p>
+        <p><strong>📧 Email:</strong> {{ user.email }}</p>
+      </div>
+      <div class="col-md-6 mb-3">
+        <p><strong>📱 Teléfono:</strong> {{ user.profile.phone|default:"No registrado" }}</p>
+        <p><strong>🌍 Ubicación:</strong> {{ user.profile.location|default:"No especificada" }}</p>
+      </div>
+    </div>
+
+    <p><strong>📝 Bio:</strong></p>
+    <p class="bg-light p-3 rounded">{{ user.profile.bio|default:"(sin bio)" }}</p>
+
+    <div class="text-center mt-4">
+      <a href="{% url 'blog:profile_edit' %}" class="btn btn-primary px-4">✏️ Editar perfil</a>
+    </div>
+  </div>
+</div>
 {% endblock %}

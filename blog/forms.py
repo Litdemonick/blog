@@ -27,4 +27,4 @@ class ReviewForm(forms.ModelForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['avatar', 'bio']
+        fields = ["avatar", "name", "bio", "phone", "location", "interests"]

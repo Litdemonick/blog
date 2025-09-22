@@ -13,7 +13,29 @@ from taggit.managers import TaggableManager
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    bio = models.TextField(blank=True)
+    bio = models.TextField(blank=True, verbose_name="Biografía")
+
+    # 🔹 Nuevos campos añadidos
+    name = models.CharField(
+        max_length=100, blank=True, null=True,
+        verbose_name="Nombre completo",
+        help_text="Tu nombre real o el que quieras mostrar públicamente."
+    )
+    phone = models.CharField(
+        max_length=20, blank=True, null=True,
+        verbose_name="Teléfono",
+        help_text="Número de contacto (opcional)."
+    )
+    location = models.CharField(
+        max_length=100, blank=True, null=True,
+        verbose_name="Ubicación",
+        help_text="Ciudad o país donde te encuentras."
+    )
+    interests = models.CharField(
+        max_length=255, blank=True, null=True,
+        verbose_name="Intereses",
+        help_text="Ej: Programación, Música, Deportes..."
+    )
 
     def __str__(self):
         return f'Perfil de {self.user.username}'
@@ -74,7 +96,6 @@ class Post(models.Model):
 # ----------------------------
 # Comentarios (moderados por autor del post)
 # ----------------------------
-# Comentarios con moderación
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     # TEMPORAL: permitir NULL para backfill
@@ -86,7 +107,6 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ['-created']
-
 
 
 # ----------------------------
