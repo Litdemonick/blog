@@ -5,17 +5,16 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from .models import Review, ReviewVote
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-
-from .forms import SignUpForm, PostForm, CommentForm, ReviewForm, ProfileForm
-from .models import Post, Comment, Review
-from taggit.models import Tag
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.http import HttpResponseForbidden
+from .models import Comment, PostBlock
+from taggit.models import Tag
+from .models import Post, Comment, Review, ReviewVote, PostBlock
+from .forms import SignUpForm, PostForm, ReviewForm, ProfileForm
 
 
+# --------- Perfil ----------
 def profile_detail(request, username=None):
     if username:
         profile_user = get_object_or_404(User, username=username)
@@ -25,7 +24,6 @@ def profile_detail(request, username=None):
         profile_user = request.user
 
     return render(request, "profile/detail.html", {"profile_user": profile_user})
-
 
 
 # --------- Auth ----------
@@ -42,9 +40,12 @@ def signup_view(request):
         form = SignUpForm()
     return render(request, 'auth/signup.html', {'form': form})
 
+
 def global_tags(request):
     return {"all_tags": Tag.objects.all()[:15]}  # mostrar solo los 15 primeros
 
+
+# --------- Votos en reseñas ----------
 @login_required
 def vote_review(request, pk, action):
     review = get_object_or_404(Review, pk=pk)
@@ -59,12 +60,10 @@ def vote_review(request, pk, action):
     )
 
     if not created:
-        # Si ya votó y es el mismo voto → elimina el voto
         if vote.vote == action:
             vote.delete()
             messages.info(request, f"Quitaste tu {action}.")
         else:
-            # Cambiar el voto
             vote.vote = action
             vote.save()
             messages.success(request, f"Cambiaste a {action}.")
@@ -91,74 +90,105 @@ class PostListView(ListView):
             qs = qs.filter(tags__slug=tag)
         return qs.select_related('author').prefetch_related('tags')
 
-# --------- Detalle / Comentarios / Reviews / Moderación ----------
+
+# --------- Detalle / Reseñas / Comentarios ----------
 class PostDetailView(DetailView):
     model = Post
-    template_name = 'post_detail.html'
-    slug_field = 'slug'
-    slug_url_kwarg = 'slug'
+    template_name = "post_detail.html"
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['comment_form'] = CommentForm()
-        ctx['review_form'] = ReviewForm()
+        post = self.object
+        user = self.request.user
+
+        # 🔹 Reseñas
+        if user.is_authenticated and (user == post.author or user.is_staff):
+            ctx["reviews"] = post.reviews.all()  # dueño/admin ve todas
+            ctx["is_owner"] = True
+        else:
+            ctx["reviews"] = post.reviews.filter(status="visible")  # otros solo las visibles
+            ctx["is_owner"] = False
+
+        # 🔹 Comentarios
+        if user.is_authenticated and (user == post.author or user.is_staff):
+            ctx["comments"] = post.comments.all()
+        else:
+            ctx["comments"] = post.comments.filter(status="visible")
+
+        # 🔹 Formularios
+        ctx["review_form"] = ReviewForm()
+        # si ya tienes un CommentForm, lo añades aquí:
+        # ctx["comment_form"] = CommentForm()
+
         return ctx
 
-@login_required
-def add_comment(request, slug):
-    post = get_object_or_404(Post, slug=slug, status='published')
-    form = CommentForm(request.POST or None)
-    if form.is_valid():
-        c = form.save(commit=False)
-        c.post = post
-        c.author = request.user
-        c.is_approved = False
-        c.save()
-        messages.info(request, 'Comentario enviado. Espera moderación del autor.')
-    return redirect(post.get_absolute_url())
 
-@login_required
-def moderate_comment(request, pk, action):
-    comment = get_object_or_404(Comment, pk=pk)
-    if comment.post.author != request.user:
-        messages.error(request, 'No puedes moderar comentarios de posts ajenos.')
-        return redirect(comment.post.get_absolute_url())
-    if action == 'approve':
-        comment.is_approved = True
-        comment.save()
-        messages.success(request, 'Comentario aprobado.')
-    elif action == 'reject':
-        comment.delete()
-        messages.warning(request, 'Comentario rechazado y eliminado.')
-    return redirect(comment.post.get_absolute_url())
-
+# --------- Añadir reseña ----------
 @login_required
 def add_review(request, slug):
     post = get_object_or_404(Post, slug=slug, status='published')
+
+    if PostBlock.objects.filter(post=post, user=request.user).exists():
+        messages.error(request, "Has sido bloqueado y no puedes dejar reseñas en este post.")
+        return redirect(post.get_absolute_url())
+
+
     form = ReviewForm(request.POST or None)
     if form.is_valid():
         rating = form.cleaned_data['rating']
         comment = form.cleaned_data.get('comment', '')
         obj, created = Review.objects.get_or_create(
             post=post, user=request.user,
-            defaults={'rating': rating, 'comment': comment}
+            defaults={'rating': rating, 'comment': comment, 'status': 'pending'}
         )
         if not created:
             obj.rating = rating
             obj.comment = comment
+            obj.status = 'pending'  # 🔹 Requiere aprobación del autor
             obj.save()
-            messages.info(request, 'Actualizaste tu calificación.')
+            messages.info(request, 'Tu reseña fue enviada. Espera aprobación del autor.')
         else:
-            messages.success(request, '¡Gracias por calificar!')
+            messages.success(request, '¡Tu reseña fue enviada! Espera aprobación del autor.')
     else:
-        messages.error(request, 'Revisa el formulario de review.')
+        messages.error(request, 'Revisa el formulario de reseña.')
     return redirect(post.get_absolute_url())
+
+
+# --------- Añadir comentario ----------
+@login_required
+
+
+@login_required
+def add_comment(request, slug):
+    post = get_object_or_404(Post, slug=slug, status="published")
+
+    # 🔥 Verificar si el usuario está bloqueado
+    if PostBlock.objects.filter(post=post, user=request.user).exists():
+        messages.error(request, "Has sido bloqueado y no puedes comentar en este post.")
+        return redirect(post.get_absolute_url())
+
+    if request.method == "POST":
+        text = request.POST.get("text")
+        if text:
+            Comment.objects.create(
+                post=post,
+                author=request.user,
+                text=text,
+                status="pending"
+            )
+            messages.info(request, "Comentario enviado. Espera moderación del autor.")
+    return redirect(post.get_absolute_url())
+
+
 
 # --------- CRUD con permisos ----------
 class AuthorRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         obj = self.get_object()
         return obj.author == self.request.user
+
 
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
@@ -170,6 +200,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, 'Post creado.')
         return super().form_valid(form)
 
+
 class PostUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
     model = Post
     form_class = PostForm
@@ -178,6 +209,7 @@ class PostUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, 'Post actualizado.')
         return super().form_valid(form)
+
 
 class PostDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     model = Post
@@ -188,15 +220,8 @@ class PostDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
         messages.warning(self.request, 'Post eliminado.')
         return super().delete(request, *args, **kwargs)
 
+
 # --------- Perfil ----------
-def profile_detail(request, username=None):
-    if username:  # cuando visitas /perfil/<username>/
-        profile_user = get_object_or_404(User, username=username)
-    else:  # cuando visitas /profile/ (tu propio perfil)
-        profile_user = request.user
-
-    return render(request, "profile/detail.html", {"profile_user": profile_user})
-
 @login_required
 def profile_edit(request):
     form = ProfileForm(request.POST or None, request.FILES or None, instance=request.user.profile)
@@ -205,3 +230,75 @@ def profile_edit(request):
         messages.success(request, 'Perfil actualizado.')
         return redirect('blog:profile')
     return render(request, 'profile/edit.html', {'form': form})
+
+
+# --------- Moderación de reseñas ----------
+def moderate_review(request, pk, action):
+    review = get_object_or_404(Review, pk=pk)
+
+    # Solo el autor del post puede moderar reseñas
+    if request.user != review.post.author:
+        return HttpResponseForbidden("No autorizado")
+
+    if action == "approve":
+        review.status = "visible"
+        review.save()
+        messages.success(request, "Reseña aprobada y visible.")
+    elif action == "hide":
+        review.status = "hidden"
+        review.save()
+        messages.info(request, "Reseña ocultada.")
+    elif action == "block":
+        # 🔥 Toggle de bloqueo
+        block, created = PostBlock.objects.get_or_create(
+            post=review.post,
+            user=review.user
+        )
+        if created:
+            review.status = "blocked"
+            review.save()
+            messages.warning(request, f"Usuario {review.user.username} bloqueado en este post.")
+        else:
+            block.delete()
+            messages.success(request, f"Usuario {review.user.username} desbloqueado en este post.")
+    elif action == "delete":
+        review.delete()
+        messages.error(request, "Reseña eliminada.")
+    else:
+        return HttpResponseForbidden("Acción no válida")
+
+    return redirect("blog:post_detail", slug=review.post.slug)
+
+
+# --------- Moderación de comentarios ----------
+from .models import Comment, PostBlock
+
+@login_required
+def moderate_comment(request, pk, action):
+    comment = get_object_or_404(Comment, pk=pk)
+
+    if request.user != comment.post.author:
+        return HttpResponseForbidden("No autorizado")
+
+    if action == "approve":
+        comment.status = "visible"
+        comment.save()
+    elif action == "hide":
+        comment.status = "hidden"
+        comment.save()
+    elif action == "block":
+        # bloquear/desbloquear al usuario
+        block, created = PostBlock.objects.get_or_create(
+            post=comment.post,
+            user=comment.author
+        )
+        if not created:
+            block.delete()  # ya estaba bloqueado → desbloqueamos
+        comment.status = "blocked"
+        comment.save()
+    elif action == "delete":
+        comment.delete()
+    else:
+        return HttpResponseForbidden("Acción no válida")
+
+    return redirect("blog:post_detail", slug=comment.post.slug)

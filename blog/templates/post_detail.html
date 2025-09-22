@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ object.title }}{% endblock %}
 {% block content %}
 <article>
@@ -9,31 +10,30 @@
     <a href="{% url 'blog:profile_detail' object.author.username %}" class="text-decoration-none text-info">
       <strong>{{ object.author.username }}</strong>
     </a> 
-    · {{ object.created|date:"d/m/Y H:i" }}
+    · {{ object.created|date:"d/m/Y g:i a" }}
+
   </small>
 
-<!-- Promedio -->
-<div class="my-3">
-  <strong>⭐ Promedio:</strong> 
-  {% if object.average_rating %}
-    <span class="text-warning" style="font-size:1.2rem;">
-      {% for i in "12345" %}
-        {% if forloop.counter <= object.average_rating|floatformat:0 %}
-          ⭐
-        {% else %}
-          ☆
-        {% endif %}
-      {% endfor %}
-    </span>
-    <span class="ms-2">
-      ({{ object.average_rating|floatformat:1 }}/5 · {{ object.total_reviews }} reseñas)
-    </span>
-  {% else %}
-    <span class="text-muted">Sin calificaciones aún</span>
-  {% endif %}
-</div>
-
-
+  <!-- Promedio -->
+  <div class="my-3">
+    <strong>⭐ Promedio:</strong> 
+    {% if object.average_rating %}
+      <span class="text-warning" style="font-size:1.2rem;">
+        {% for i in "12345" %}
+          {% if forloop.counter <= object.average_rating|floatformat:0 %}
+            ⭐
+          {% else %}
+            ☆
+          {% endif %}
+        {% endfor %}
+      </span>
+      <span class="ms-2">
+        ({{ object.average_rating|floatformat:1 }}/5 · {{ object.total_reviews }} reseñas)
+      </span>
+    {% else %}
+      <span class="text-muted">Sin calificaciones aún</span>
+    {% endif %}
+  </div>
 
   <!-- Imagen de portada -->
   {% if object.cover %}
@@ -56,7 +56,6 @@
   {% if user.is_authenticated %}
     <form method="post" action="{% url 'blog:add_review' object.slug %}" class="mb-4">
       {% csrf_token %}
-
       <div class="mb-3">
         <label for="id_rating" class="form-label">Tu calificación (1 a 5)</label>
         <select name="rating" id="id_rating" class="form-select" required>
@@ -68,13 +67,11 @@
           <option value="5">⭐⭐⭐⭐⭐ 5 - Excelente</option>
         </select>
       </div>
-
       <div class="mb-3">
         <label for="id_comment" class="form-label">Comentario</label>
         <textarea name="comment" id="id_comment" rows="3" class="form-control"
                   placeholder="Escribe tu opinión..."></textarea>
       </div>
-
       <button class="btn btn-success w-100">Enviar</button>
     </form>
   {% else %}
@@ -85,31 +82,90 @@
 
   <!-- Lista de reseñas -->
   <h4>Reseñas</h4>
-  {% for r in object.reviews.all %}
-    <div class="border p-3 my-3 rounded bg-dark text-light shadow-sm">
-      <div class="d-flex justify-content-between">
-        <!-- Nombre con link al perfil -->
-        <a href="{% url 'blog:profile_detail' r.user.username %}" class="text-decoration-none text-info">
-          <strong>{{ r.user.username }}</strong>
-        </a>
-        <small class="text-muted">{{ r.created|date:"d/m/Y H:i" }}</small>
-      </div>
+  <ul class="list-unstyled">
+    {% for r in reviews %}
+      <div class="review border rounded p-3 mb-3 d-flex align-items-start">
+        <!-- Avatar -->
+        <div class="me-3">
+          {% if r.user.profile.avatar %}
+            <img src="{{ r.user.profile.avatar.url }}" alt="avatar" class="rounded-circle" width="48" height="48">
+          {% else %}
+            <img src="{% static 'img/default-avatar.png' %}" alt="avatar" class="rounded-circle" width="48" height="48">
+          {% endif %}
+        </div>
 
-      <div class="mt-1">⭐ {{ r.rating }}</div>
-      <p class="mb-2">{{ r.comment }}</p>
+        <!-- Contenido de la reseña -->
+        <div class="flex-grow-1">
+          <p class="mb-1">{{ r.comment }}</p>
+          <small class="text-warning">⭐ {{ r.rating }}/5</small><br>
+          <small class="text-muted">
+            Por 
+            <a href="{% url 'blog:profile_detail' r.user.username %}" class="text-info fw-bold">
+              {{ r.user.username|default:"Anónimo" }}
+            </a>
+            – {{ r.created|date:"d/m/Y g:i A" }}
+          </small>
 
-      <!-- Botones Like/Dislike -->
-      <div class="mt-2">
-        <a href="{% url 'blog:vote_review' r.id 'like' %}" class="btn btn-sm btn-outline-success me-2">
-          👍 Like ({{ r.likes_count }})
-        </a>
-        <a href="{% url 'blog:vote_review' r.id 'dislike' %}" class="btn btn-sm btn-outline-danger">
-          👎 Dislike ({{ r.dislikes_count }})
-        </a>
+          <!-- Moderación de reseñas -->
+          {% if is_owner %}
+            <div class="mt-2">
+              <form method="post" action="{% url 'blog:moderate_review' r.id 'approve' %}" style="display:inline;">
+                {% csrf_token %}<button class="btn btn-sm btn-success">Aprobar</button>
+              </form>
+              <form method="post" action="{% url 'blog:moderate_review' r.id 'hide' %}" style="display:inline;">
+                {% csrf_token %}<button class="btn btn-sm btn-warning">Ocultar</button>
+              </form>
+              <form method="post" action="{% url 'blog:moderate_review' r.id 'block' %}" style="display:inline;">
+                {% csrf_token %}<button class="btn btn-sm btn-danger">Bloquear</button>
+              </form>
+              <form method="post" action="{% url 'blog:moderate_review' r.id 'delete' %}" style="display:inline;">
+                {% csrf_token %}<button class="btn btn-sm btn-dark">Eliminar</button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
       </div>
-    </div>
-  {% empty %}
-    <p class="text-muted">No hay reseñas.</p>
-  {% endfor %}
+    {% empty %}
+      <p class="text-muted">No hay reseñas.</p>
+    {% endfor %}
+  </ul>
+
+  <hr>
+
+  <!-- Lista de comentarios -->
+  <h4>Comentarios</h4>
+  <ul class="list-unstyled">
+    {% for c in comments %}
+      <li class="comment border rounded p-2 mb-2">
+        <p class="mb-1">{{ c.text }}</p>
+        <small class="text-muted">
+          Por {{ c.author|default:"Anónimo" }} – {{ c.created|date:"d/m/Y g:i A" }}
+        </small>
+        <br>
+        <small class="badge text-bg-secondary">Estado: {{ c.get_status_display }}</small>
+
+        <!-- Moderación de comentarios -->
+        {% if is_owner %}
+          <div class="mt-2">
+            <form method="post" action="{% url 'blog:moderate_comment' c.id 'approve' %}" style="display:inline;">
+              {% csrf_token %}<button class="btn btn-sm btn-success">Aprobar</button>
+            </form>
+            <form method="post" action="{% url 'blog:moderate_comment' c.id 'hide' %}" style="display:inline;">
+              {% csrf_token %}<button class="btn btn-sm btn-warning">Ocultar</button>
+            </form>
+            <form method="post" action="{% url 'blog:moderate_comment' c.id 'block' %}" style="display:inline;">
+              {% csrf_token %}<button class="btn btn-sm btn-danger">Bloquear</button>
+            </form>
+            <form method="post" action="{% url 'blog:moderate_comment' c.id 'delete' %}" style="display:inline;">
+              {% csrf_token %}<button class="btn btn-sm btn-dark">Eliminar</button>
+            </form>
+          </div>
+        {% endif %}
+      </li>
+    {% empty %}
+      <p class="text-muted">No hay comentarios aún.</p>
+    {% endfor %}
+  </ul>
+
 </article>
 {% endblock %}

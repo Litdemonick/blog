@@ -13,9 +13,10 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('post', 'author', 'is_approved', 'created')
-    list_filter = ('is_approved', 'created')
-    search_fields = ('text',)
+    list_display = ('id', 'post', 'author', 'status', 'created')
+    list_filter = ('status', 'created')
+    search_fields = ('text', 'author__username')
+
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):

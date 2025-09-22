@@ -1,0 +1,14 @@
+/* Colores claros para texto en modo oscuro */
+.review, .review p, .review small,
+.comment, .comment p, .comment small {
+  color: #f5f5f5 !important;
+}
+
+.review a, .comment a {
+  color: #0dcaf0 !important;   /* celeste Bootstrap */
+  text-decoration: none;
+}
+
+.review a:hover, .comment a:hover {
+  color: #0bbbe6 !important;
+}
