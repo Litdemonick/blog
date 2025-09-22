@@ -12,10 +12,28 @@
     · {{ object.created|date:"d/m/Y H:i" }}
   </small>
 
-  <!-- Promedio -->
-  <div class="my-2">
-    ⭐ Promedio: <strong>{{ object.average_rating }}</strong>
-  </div>
+<!-- Promedio -->
+<div class="my-3">
+  <strong>⭐ Promedio:</strong> 
+  {% if object.average_rating %}
+    <span class="text-warning" style="font-size:1.2rem;">
+      {% for i in "12345" %}
+        {% if forloop.counter <= object.average_rating|floatformat:0 %}
+          ⭐
+        {% else %}
+          ☆
+        {% endif %}
+      {% endfor %}
+    </span>
+    <span class="ms-2">
+      ({{ object.average_rating|floatformat:1 }}/5 · {{ object.total_reviews }} reseñas)
+    </span>
+  {% else %}
+    <span class="text-muted">Sin calificaciones aún</span>
+  {% endif %}
+</div>
+
+
 
   <!-- Imagen de portada -->
   {% if object.cover %}

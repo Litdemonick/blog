@@ -91,6 +91,11 @@ class Post(models.Model):
     def average_rating(self):
         agg = self.reviews.aggregate(avg=models.Avg('rating'))
         return round(agg['avg'] or 0, 2)
+    
+    @property
+    def total_reviews(self):
+        return self.reviews.count()
+
 
 
 # ----------------------------

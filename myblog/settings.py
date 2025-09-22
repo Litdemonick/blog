@@ -7,6 +7,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --- Seguridad / Debug ---
 SECRET_KEY = 'dev-secret-key-cambia-esto-en-produccion'
 DEBUG = True
+# Redirigir a tu ruta personalizada de login
+LOGIN_URL = '/login/'
+
 
 # --- Seguridad / Hosts permitidos ---
 ALLOWED_HOSTS = [

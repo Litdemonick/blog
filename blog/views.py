@@ -12,6 +12,7 @@ from .forms import SignUpForm, PostForm, CommentForm, ReviewForm, ProfileForm
 from .models import Post, Comment, Review
 from taggit.models import Tag
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 
 
