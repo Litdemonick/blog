@@ -1,9 +1,75 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2>Editar perfil</h2>
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button class="btn btn-success">Guardar</button>
-</form>
+<div class="container mt-5" style="max-width: 700px;">
+  <div class="card shadow-sm p-4 rounded-3">
+    <h2 class="mb-4 text-center">Editar perfil</h2>
+    
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+
+      <!-- Avatar -->
+      <div class="mb-3">
+        <label for="id_avatar" class="form-label">Foto de perfil</label>
+        {{ form.avatar }}
+        <div class="form-text">Sube una imagen cuadrada para que se vea bien en el perfil.</div>
+        {% if form.avatar.errors %}
+          <div class="text-danger small">{{ form.avatar.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Nombre -->
+      <div class="mb-3">
+        <label for="id_name" class="form-label">Nombre completo</label>
+        {{ form.name }}
+        <div class="form-text">Tu nombre real o el que quieras mostrar públicamente.</div>
+        {% if form.name.errors %}
+          <div class="text-danger small">{{ form.name.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Bio -->
+      <div class="mb-3">
+        <label for="id_bio" class="form-label">Biografía</label>
+        {{ form.bio }}
+        <div class="form-text">Escribe algo sobre ti, intereses, profesión o pasatiempos.</div>
+        {% if form.bio.errors %}
+          <div class="text-danger small">{{ form.bio.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Teléfono -->
+      <div class="mb-3">
+        <label for="id_phone" class="form-label">Teléfono</label>
+        {{ form.phone }}
+        <div class="form-text">Un número de contacto (opcional).</div>
+        {% if form.phone.errors %}
+          <div class="text-danger small">{{ form.phone.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Ubicación -->
+      <div class="mb-3">
+        <label for="id_location" class="form-label">Ubicación</label>
+        {{ form.location }}
+        <div class="form-text">Ciudad, provincia o país donde te encuentras.</div>
+        {% if form.location.errors %}
+          <div class="text-danger small">{{ form.location.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Intereses -->
+      <div class="mb-3">
+        <label for="id_interests" class="form-label">Intereses</label>
+        {{ form.interests }}
+        <div class="form-text">Escribe tus intereses separados por comas (ej. programación, música, deportes...)</div>
+        {% if form.interests.errors %}
+          <div class="text-danger small">{{ form.interests.errors }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Botón -->
+      <button class="btn btn-success w-100 mt-3">💾 Guardar cambios</button>
+    </form>
+  </div>
+</div>
 {% endblock %}

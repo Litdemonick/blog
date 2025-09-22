@@ -13,7 +13,29 @@ from taggit.managers import TaggableManager
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
-    bio = models.TextField(blank=True)
+    bio = models.TextField(blank=True, verbose_name="Biografía")
+
+    # 🔹 Nuevos campos añadidos
+    name = models.CharField(
+        max_length=100, blank=True, null=True,
+        verbose_name="Nombre completo",
+        help_text="Tu nombre real o el que quieras mostrar públicamente."
+    )
+    phone = models.CharField(
+        max_length=20, blank=True, null=True,
+        verbose_name="Teléfono",
+        help_text="Número de contacto (opcional)."
+    )
+    location = models.CharField(
+        max_length=100, blank=True, null=True,
+        verbose_name="Ubicación",
+        help_text="Ciudad o país donde te encuentras."
+    )
+    interests = models.CharField(
+        max_length=255, blank=True, null=True,
+        verbose_name="Intereses",
+        help_text="Ej: Programación, Música, Deportes..."
+    )
 
     def __str__(self):
         return f'Perfil de {self.user.username}'
@@ -69,12 +91,16 @@ class Post(models.Model):
     def average_rating(self):
         agg = self.reviews.aggregate(avg=models.Avg('rating'))
         return round(agg['avg'] or 0, 2)
+    
+    @property
+    def total_reviews(self):
+        return self.reviews.count()
+
 
 
 # ----------------------------
 # Comentarios (moderados por autor del post)
 # ----------------------------
-# Comentarios con moderación
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     # TEMPORAL: permitir NULL para backfill
@@ -88,7 +114,26 @@ class Comment(models.Model):
         ordering = ['-created']
 
 
+class ReviewVote(models.Model):
+    VOTE_CHOICES = (
+        ('like', '👍'),
+        ('dislike', '👎'),
+    )
 
+    review = models.ForeignKey('Review', on_delete=models.CASCADE, related_name='votes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_votes')
+    vote = models.CharField(max_length=7, choices=VOTE_CHOICES)
+
+    class Meta:
+        unique_together = ('review', 'user')  # un usuario no puede votar 2 veces la misma review
+
+    def __str__(self):
+        return f"{self.user.username} → {self.vote} en {self.review}"
+
+
+# ----------------------------
+# Reviews 1..5 únicas por (user, post)
+# ----------------------------
 # ----------------------------
 # Reviews 1..5 únicas por (user, post)
 # ----------------------------
@@ -109,3 +154,12 @@ class Review(models.Model):
 
     def __str__(self):
         return f'{self.rating}★ de {self.user} en {self.post}'
+
+    # ✅ Contadores de likes y dislikes
+    @property
+    def likes_count(self):
+        return self.votes.filter(vote="like").count()
+
+    @property
+    def dislikes_count(self):
+        return self.votes.filter(vote="dislike").count()

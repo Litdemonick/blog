@@ -7,7 +7,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --- Seguridad / Debug ---
 SECRET_KEY = 'dev-secret-key-cambia-esto-en-produccion'
 DEBUG = True
-ALLOWED_HOSTS: list[str] = []
+# Redirigir a tu ruta personalizada de login
+LOGIN_URL = '/login/'
+
+
+# --- Seguridad / Hosts permitidos ---
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "192.168.30.133",   # ⚡ cambia por la IP local de tu PC
+]
+
+# --- CSRF confianza ---
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "http://192.168.30.133:8000",  # ⚡ cambia por tu IP real
+]
 
 # --- Apps instaladas ---
 INSTALLED_APPS = [
@@ -56,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'blog.context_processors.global_tags',
             ],
         },
     },
