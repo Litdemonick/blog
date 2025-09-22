@@ -10,7 +10,6 @@ DEBUG = True
 # Redirigir a tu ruta personalizada de login
 LOGIN_URL = '/login/'
 
-
 # --- Seguridad / Hosts permitidos ---
 ALLOWED_HOSTS = [
     "127.0.0.1",
@@ -33,7 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles',   # ✅ solo una vez
 
     # Terceros
     'ckeditor',              # Editor
@@ -63,8 +62,7 @@ WSGI_APPLICATION = 'myblog.wsgi.application'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # Si quieres una carpeta de templates global, descomenta y apunta a BASE_DIR / "templates"
-        'DIRS': [],
+        'DIRS': [],  # carpeta global de templates si quieres usar BASE_DIR / "templates"
         'APP_DIRS': True,   # habilita blog/templates/
         'OPTIONS': {
             'context_processors': [
@@ -103,16 +101,13 @@ USE_TZ = True
 # --- Archivos estáticos y media ---
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'   # para collectstatic en prod
-STATICFILES_DIRS: list[Path] = []        # añade rutas locales si usas assets propios
+STATICFILES_DIRS = [BASE_DIR / "static"] # ✅ aquí cargas tus íconos (ej: static/img/pc.png)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'          # asegúrate que exista: media/
 
 # --- CKEditor (con uploader) ---
-# Carpeta de subida relativa a MEDIA_ROOT → media/uploads/
-CKEDITOR_UPLOAD_PATH = 'uploads/'
-# Permitir archivos no imagen (opcional)
-# CKEDITOR_ALLOW_NONIMAGE_FILES = True
+CKEDITOR_UPLOAD_PATH = 'uploads/'   # Carpeta de subida relativa a MEDIA_ROOT → media/uploads/
 CKEDITOR_CONFIGS = {
     'default': {
         'toolbar': 'full',
