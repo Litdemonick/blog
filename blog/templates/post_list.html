@@ -1,22 +1,99 @@
 {% extends 'base.html' %}
 {% block title %}Inicio - Noticias{% endblock %}
+
 {% block content %}
-<h1>Últimas noticias & rumores</h1>
-{% for p in posts %}
-  <div class="card my-3">
-    <div class="card-body">
-      <h3><a href="{{ p.get_absolute_url }}">{{ p.title }}</a></h3>
-      <small>por {{ p.author.username }} · {{ p.created|date:"d/m/Y H:i" }}</small>
-      {% if p.cover %}<img src="{{ p.cover.url }}" class="img-fluid my-2" alt="cover">{% endif %}
-      <p>{{ p.excerpt }}</p>
-      <div>
-        <strong>⭐ {{ p.average_rating }}</strong>
-        {% for t in p.tags.all %}<a href="{% url 'blog:post_by_tag' t.slug %}" class="badge text-bg-secondary">{{ t.name }}</a>{% endfor %}
+<h1 class="mb-4 fw-bold text-uppercase border-bottom border-2 border-danger pb-2">
+  Últimas noticias & rumores
+</h1>
+
+<div class="row g-4">
+  {% for p in posts %}
+    <div class="col-12">
+      <div class="post-card shadow-sm">
+        
+        <!-- Imagen -->
+        {% if p.cover %}
+          <a href="{{ p.get_absolute_url }}">
+            <img src="{{ p.cover.url }}" class="post-img" alt="{{ p.title }}">
+          </a>
+        {% endif %}
+        
+        <!-- Contenido -->
+        <div class="p-3">
+          <h3 class="post-title">
+            <a href="{{ p.get_absolute_url }}">{{ p.title }}</a>
+          </h3>
+          <div class="post-meta small text-secondary mb-2">
+            por <span class="text-light">{{ p.author.username }}</span> · {{ p.created|date:"d/m/Y H:i" }}
+          </div>
+          <p class="text-light mb-2">{{ p.excerpt|truncatewords:25 }}</p>
+
+          <!-- Rating y tags -->
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="fw-bold text-warning">⭐ {{ p.average_rating }}</span>
+            {% for t in p.tags.all %}
+              <a href="{% url 'blog:post_by_tag' t.slug %}" class="badge bg-dark border border-secondary text-uppercase small">
+                #{{ t.name }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-{% empty %}
-<p>No hay publicaciones.</p>
-{% endfor %}
+  {% empty %}
+    <p>No hay publicaciones.</p>
+  {% endfor %}
+</div>
+
 {% include 'partials/_pagination.html' %}
 {% endblock %}
+
+<style>
+  /* Tarjeta oscura gamer */
+  .post-card {
+    background: #1e1e1e;
+    border-radius: .75rem;
+    overflow: hidden;
+    border: 1px solid #2a2a2a;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .post-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 12px rgba(255,60,0,.5);
+  }
+
+  /* Imagen reducida */
+.post-img {
+  width: 100%;
+  height: 220px;       /* aquí decides el tamaño */
+  object-fit: cover;   /* recorta sin deformar */
+  display: block;
+}
+
+  /* Título */
+  .post-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: .5rem;
+  }
+  .post-title a {
+    color: #ff3c00;
+    text-decoration: none;
+    transition: color .2s ease;
+  }
+  .post-title a:hover {
+    color: #fff;
+    text-shadow: 0 0 6px #ff3c00;
+  }
+
+  /* Tags */
+  .badge {
+    background: #2a2a2a !important;
+    border-radius: .3rem;
+    padding: .35em .6em;
+  }
+  .badge:hover {
+    background: #ff3c00 !important;
+    color: #fff !important;
+  }
+</style>

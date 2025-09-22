@@ -1,5 +1,82 @@
+{# blog/templates/partials/_messages.html #}
 {% if messages %}
-  {% for m in messages %}
-    <div class="alert alert-{{ m.tags }} my-2">{{ m }}</div>
-  {% endfor %}
-{% endif %}
+  <div class="messages fixed-top mt-3 d-flex flex-column align-items-center" aria-live="polite" aria-atomic="true" style="z-index: 1080;">
+    {% for m in messages %}
+      {% with tag=m.tags|default:'info' %}
+      <div class="game-alert alert alert-{{ tag }} fade show mb-2 shadow-lg border-0 text-white"
+           role="alert" data-tag="{{ tag }}">
+        <div class="d-flex align-items-center gap-2 px-3 py-2">
+          <span class="game-alert-icon flex-shrink-0">
+            {% if 'success' in tag %}
+              ✅
+            {% elif 'warning' in tag %}
+              ⚠
+            {% elif 'error' in tag or 'danger' in tag %}
+              ❌
+            {% else %}
+              ℹ
+            {% endif %}
+          </span>
+          <div class="flex-grow-1 fw-semibold">{{ m }}</div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+        <div class="game-alert-progress"></div>
+      </div>
+      {% endwith %}
+    {% endfor %}
+  </div>
+
+  <style>
+    /* Estilo general */
+    .game-alert {
+      --al-color: #2d89ef;
+      position: relative;
+      border-radius: .5rem;
+      font-size: 0.9rem;
+      background: linear-gradient(135deg, rgba(25,25,25,.95), rgba(40,40,40,.95));
+      border-left: 4px solid var(--al-color);
+      animation: fadeInDown .4s ease;
+      min-width: 300px;
+      max-width: 500px;
+    }
+    .game-alert .game-alert-icon {
+      font-size: 1.1rem;
+      color: var(--al-color);
+    }
+    .game-alert .game-alert-progress {
+      position: absolute;
+      left: 0; bottom: 0;
+      height: 3px;
+      width: 0%;
+      background: var(--al-color);
+      transition: width 4s linear;
+    }
+    /* Colores */
+    .game-alert[data-tag*="success"] { --al-color: #28a745; }
+    .game-alert[data-tag*="warning"] { --al-color: #ffc107; }
+    .game-alert[data-tag*="danger"],
+    .game-alert[data-tag*="error"]   { --al-color: #dc3545; }
+    .game-alert[data-tag*="info"],
+    .game-alert[data-tag=""]         { --al-color: #17a2b8; }
+
+    /* Animación entrada */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+  <script>
+    (function () {
+      const alerts = document.querySelectorAll('.game-alert');
+      alerts.forEach((el) => {
+        // Animar barrita y autocerrar
+        requestAnimationFrame(() => el.querySelector('.game-alert-progress')?.style.setProperty('width', '100%'));
+        const timeout = setTimeout(() => {
+          try { new bootstrap.Alert(el).close(); } catch (_) {}
+        }, 4000);
+        el.addEventListener('mouseenter', () => clearTimeout(timeout), { once: true });
+      });
+    })();
+  </script>
+{% endif %}
