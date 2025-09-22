@@ -5,10 +5,27 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from .models import Review, ReviewVote
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from .forms import SignUpForm, PostForm, CommentForm, ReviewForm, ProfileForm
 from .models import Post, Comment, Review
+from taggit.models import Tag
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User
+
+
+def profile_detail(request, username=None):
+    if username:
+        profile_user = get_object_or_404(User, username=username)
+    else:
+        if not request.user.is_authenticated:
+            return redirect("blog:login")
+        profile_user = request.user
+
+    return render(request, "profile/detail.html", {"profile_user": profile_user})
+
+
 
 # --------- Auth ----------
 def signup_view(request):
@@ -23,6 +40,38 @@ def signup_view(request):
     else:
         form = SignUpForm()
     return render(request, 'auth/signup.html', {'form': form})
+
+def global_tags(request):
+    return {"all_tags": Tag.objects.all()[:15]}  # mostrar solo los 15 primeros
+
+@login_required
+def vote_review(request, pk, action):
+    review = get_object_or_404(Review, pk=pk)
+    if action not in ['like', 'dislike']:
+        messages.error(request, "Acción inválida.")
+        return redirect(review.post.get_absolute_url())
+
+    # Buscar si ya votó
+    vote, created = ReviewVote.objects.get_or_create(
+        review=review, user=request.user,
+        defaults={'vote': action}
+    )
+
+    if not created:
+        # Si ya votó y es el mismo voto → elimina el voto
+        if vote.vote == action:
+            vote.delete()
+            messages.info(request, f"Quitaste tu {action}.")
+        else:
+            # Cambiar el voto
+            vote.vote = action
+            vote.save()
+            messages.success(request, f"Cambiaste a {action}.")
+    else:
+        messages.success(request, f"¡Gracias por tu {action}!")
+
+    return redirect(review.post.get_absolute_url())
+
 
 # --------- Listado / Búsqueda / Paginación ----------
 class PostListView(ListView):
@@ -139,9 +188,13 @@ class PostDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 # --------- Perfil ----------
-@login_required
-def profile_detail(request):
-    return render(request, 'profile/detail.html')
+def profile_detail(request, username=None):
+    if username:  # cuando visitas /perfil/<username>/
+        profile_user = get_object_or_404(User, username=username)
+    else:  # cuando visitas /profile/ (tu propio perfil)
+        profile_user = request.user
+
+    return render(request, "profile/detail.html", {"profile_user": profile_user})
 
 @login_required
 def profile_edit(request):

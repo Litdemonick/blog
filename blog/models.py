@@ -109,6 +109,26 @@ class Comment(models.Model):
         ordering = ['-created']
 
 
+class ReviewVote(models.Model):
+    VOTE_CHOICES = (
+        ('like', '👍'),
+        ('dislike', '👎'),
+    )
+
+    review = models.ForeignKey('Review', on_delete=models.CASCADE, related_name='votes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='review_votes')
+    vote = models.CharField(max_length=7, choices=VOTE_CHOICES)
+
+    class Meta:
+        unique_together = ('review', 'user')  # un usuario no puede votar 2 veces la misma review
+
+    def __str__(self):
+        return f"{self.user.username} → {self.vote} en {self.review}"
+
+
+# ----------------------------
+# Reviews 1..5 únicas por (user, post)
+# ----------------------------
 # ----------------------------
 # Reviews 1..5 únicas por (user, post)
 # ----------------------------
@@ -129,3 +149,12 @@ class Review(models.Model):
 
     def __str__(self):
         return f'{self.rating}★ de {self.user} en {self.post}'
+
+    # ✅ Contadores de likes y dislikes
+    @property
+    def likes_count(self):
+        return self.votes.filter(vote="like").count()
+
+    @property
+    def dislikes_count(self):
+        return self.votes.filter(vote="dislike").count()
