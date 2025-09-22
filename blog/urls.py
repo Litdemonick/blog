@@ -1,11 +1,15 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from django.urls import path
+from . import views
 
 app_name = "blog"
 
+
 urlpatterns = [
     # --------- Posts ----------
+    
     path("", views.PostListView.as_view(), name="post_list"),
     path("tag/<slug:tag_slug>/", views.PostListView.as_view(), name="post_by_tag"),
     path("buscar/", views.PostListView.as_view(), name="search"),
@@ -14,6 +18,9 @@ urlpatterns = [
     path("post/<slug:slug>/", views.PostDetailView.as_view(), name="post_detail"),
     path("post/<slug:slug>/editar/", views.PostUpdateView.as_view(), name="post_update"),
     path("post/<slug:slug>/eliminar/", views.PostDeleteView.as_view(), name="post_delete"),
+
+    # --------- Plataformas ----------
+    path("plataforma/<str:platform_slug>/", views.post_by_platform, name="post_by_platform"),
 
     # --------- Reseñas ----------
     path("post/<slug:slug>/review/", views.add_review, name="add_review"),

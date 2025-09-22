@@ -10,6 +10,10 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseForbidden
 from .models import Comment, PostBlock
 from taggit.models import Tag
+from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
+from .models import Post
+from .models import Post
 from .models import Post, Comment, Review, ReviewVote, PostBlock
 from .forms import SignUpForm, PostForm, ReviewForm, ProfileForm
 
@@ -156,8 +160,15 @@ def add_review(request, slug):
     return redirect(post.get_absolute_url())
 
 
+def post_by_platform(request, platform_slug):
+    posts = Post.objects.filter(platform=platform_slug)
+    return render(request, "post_list.html", {
+        "posts": posts,
+        "platform": platform_slug,
+    })
+
+
 # --------- Añadir comentario ----------
-@login_required
 
 
 @login_required

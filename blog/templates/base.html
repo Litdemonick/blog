@@ -194,6 +194,52 @@
       color: #0bbbe6 !important;
       text-decoration: underline;
     }
+
+
+    /* 🔥 Íconos de plataformas */
+.platform-filters {
+  display: flex;
+  justify-content: center;   /* centrados */
+  gap: 15px;                 /* espacio entre ellos */
+  margin: 20px 0;
+}
+
+.platform-filters img {
+  width: 40px;               /* ajusta tamaño */
+  height: auto;              /* mantiene proporción */
+  object-fit: contain;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.platform-filters img:hover {
+  transform: scale(1.2);
+}
+
+
+
+/* 🔥 Meta de los posts */
+.post-meta {
+  color: #bbb !important;       /* gris claro */
+  font-size: 0.9rem;
+}
+
+/* Usuario en naranja gamer */
+.post-meta .username {
+  color: #ff3c00 !important;
+  font-weight: 600;
+}
+
+/* Rating bien visible */
+.rating {
+  display: block;               /* en nueva línea */
+  color: #ffc107 !important;    /* amarillo gamer */
+  font-weight: 700;
+  margin: 5px 0 10px 0;
+}
+
+
+
   </style>
 </head>
 <body>

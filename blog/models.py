@@ -50,10 +50,18 @@ class Post(models.Model):
         ('published', 'Publicado'),
     )
 
+    PLATFORM_CHOICES = [
+        ("pc", "PC"),
+        ("xbox", "Xbox"),
+        ("nintendo", "Nintendo Switch"),
+        ("mobile", "Celular"),
+    ]
+
     title = models.CharField(max_length=200, verbose_name='Título')
     slug = models.SlugField(max_length=220, unique=True, db_index=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     cover = models.ImageField(upload_to='covers/', blank=True, null=True)
+    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES, default="pc")
     excerpt = models.CharField(max_length=300, blank=True)
     content = RichTextUploadingField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
