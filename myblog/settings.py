@@ -14,14 +14,14 @@ LOGIN_URL = '/login/'
 ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
-    "192.168.30.133",   # ⚡ cambia por la IP local de tu PC
+    ".up.railway.app",  
 ]
 
 # --- CSRF confianza ---
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8000",
     "http://localhost:8000",
-    "http://192.168.30.133:8000",  # ⚡ cambia por tu IP real
+    "https://*.up.railway.app",  
 ]
 
 # --- Apps instaladas ---
