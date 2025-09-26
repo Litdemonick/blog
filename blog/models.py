@@ -148,8 +148,10 @@ class Review(models.Model):
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies")  # 🔹 Nuevo campo
     rating = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        null=True, blank=True  # 🔹 Puede ser vacío si es solo respuesta
     )
     comment = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
@@ -157,12 +159,10 @@ class Review(models.Model):
 
     class Meta:
         ordering = ['-created']
-        constraints = [
-            models.UniqueConstraint(fields=['post', 'user'], name='uniq_review_per_user_post')
-        ]
 
     def __str__(self):
-        return f"{self.user} – {self.rating}★ – {self.get_status_display()}"
+        return f"{self.user} – {self.comment[:30]}"
+
 
     @property
     def likes_count(self):

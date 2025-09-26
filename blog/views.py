@@ -157,29 +157,49 @@ def add_review(request, slug):
     post = get_object_or_404(Post, slug=slug, status='published')
 
     if PostBlock.objects.filter(post=post, user=request.user).exists():
-        messages.error(request, "Has sido bloqueado y no puedes dejar reseñas en este post.")
+        messages.error(request, "Has sido bloqueado y no puedes interactuar en este post.")
         return redirect(post.get_absolute_url())
 
+    if request.method == "POST":
+        parent_id = request.POST.get("parent_id")
+        comment = request.POST.get("comment", "")
+        rating = request.POST.get("rating")
 
-    form = ReviewForm(request.POST or None)
-    if form.is_valid():
-        rating = form.cleaned_data['rating']
-        comment = form.cleaned_data.get('comment', '')
-        obj, created = Review.objects.get_or_create(
-            post=post, user=request.user,
-            defaults={'rating': rating, 'comment': comment, 'status': 'pending'}
-        )
-        if not created:
-            obj.rating = rating
-            obj.comment = comment
-            obj.status = 'pending'  # 🔹 Requiere aprobación del autor
-            obj.save()
-            messages.info(request, 'Tu reseña fue enviada. Espera aprobación del autor.')
-        else:
-            messages.success(request, '¡Tu reseña fue enviada! Espera aprobación del autor.')
-    else:
-        messages.error(request, 'Revisa el formulario de reseña.')
+        if parent_id:  # 🔹 Es una respuesta a otra reseña
+            parent = Review.objects.filter(id=parent_id, post=post).first()
+            review = Review.objects.create(
+                post=post,
+                user=request.user,
+                parent=parent,
+                comment=comment,
+                status="visible"  # ✅ respuestas se publican directo
+            )
+            # Notificar al autor de la reseña original
+            if parent and parent.user != request.user:
+                Notification.objects.create(
+                    user=parent.user,
+                    actor=request.user,
+                    verb="respondió a tu reseña",
+                    target_post=post
+                )
+        else:  # 🔹 Es reseña inicial (con rating obligatorio)
+            if not rating:
+                messages.error(request, "Debes elegir una calificación (1 a 5).")
+                return redirect(post.get_absolute_url())
+
+            review = Review.objects.create(
+                post=post,
+                user=request.user,
+                rating=rating,
+                comment=comment,
+                status="pending"  # ✅ requiere aprobación
+            )
+            messages.info(request, "Tu reseña fue enviada. Espera aprobación del autor.")
+
+        procesar_menciones(review, request.user, post)
+
     return redirect(post.get_absolute_url())
+
 
 
 def post_by_platform(request, platform_slug):
