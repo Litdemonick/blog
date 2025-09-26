@@ -244,7 +244,8 @@
 </head>
 <body>
 
-<a href="{% url 'notification_list' %}" class="nav-link position-relative">
+<a href="{% url 'blog:notification_list' %}" class="nav-link position-relative">
+
   🔔
   {% if unread_count > 0 %}
     <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
