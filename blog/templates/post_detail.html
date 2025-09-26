@@ -51,14 +51,14 @@
 
   <hr>
 
-  <!-- Formulario de reseña -->
+  <!-- Formulario principal de reseña -->
   <h4>Deja tu reseña</h4>
   {% if user.is_authenticated %}
     <form method="post" action="{% url 'blog:add_review' object.slug %}" class="mb-4">
       {% csrf_token %}
       <div class="mb-3">
         <label for="id_rating" class="form-label">Tu calificación (1 a 5)</label>
-        <select name="rating" id="id_rating" class="form-select">
+        <select name="rating" id="id_rating" class="form-select" required>
           <option value="">Selecciona...</option>
           <option value="1">⭐ 1 - Muy malo</option>
           <option value="2">⭐⭐ 2 - Malo</option>
@@ -67,14 +67,8 @@
           <option value="5">⭐⭐⭐⭐⭐ 5 - Excelente</option>
         </select>
       </div>
-
-      <!-- Campo comentario principal o respuesta -->
-      <textarea id="review-textarea" name="comment" rows="3" class="form-control mb-2"
-                placeholder="Escribe tu opinión o responde a alguien..." required></textarea>
-
-      <!-- Campo oculto: solo se llena si es respuesta -->
-      <input type="hidden" name="parent_id" id="parent-id">
-
+      <textarea name="comment" rows="3" class="form-control mb-2"
+                placeholder="Escribe tu opinión..." required></textarea>
       <button type="submit" class="btn btn-success w-100">Enviar</button>
     </form>
   {% else %}
@@ -113,15 +107,14 @@
 
           <!-- Botón Responder -->
           {% if user.is_authenticated %}
-            <a href="#review-textarea"
-               class="reply-btn btn btn-sm btn-outline-primary mt-2"
-               data-username="{{ r.user.username }}"
+            <a href="#" 
+               class="reply-toggle btn btn-sm btn-outline-primary mt-2"
                data-review="{{ r.id }}">
               Responder
             </a>
           {% endif %}
 
-          <!-- Moderación de reseñas (solo dueño del post) -->
+          <!-- Moderación (solo dueño) -->
           {% if is_owner %}
             <div class="mt-2">
               <form method="post" action="{% url 'blog:moderate_review' r.id 'approve' %}" style="display:inline;">
@@ -148,6 +141,18 @@
               </small>
             </div>
           {% endfor %}
+
+          <!-- Formulario inline de respuesta (oculto por defecto) -->
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'blog:add_review' object.slug %}" 
+                  class="reply-form mt-2" id="reply-form-{{ r.id }}" style="display:none;">
+              {% csrf_token %}
+              <input type="hidden" name="parent_id" value="{{ r.id }}">
+              <textarea name="comment" rows="2" class="form-control mb-2"
+                        placeholder="Responde a {{ r.user.username }}..." required></textarea>
+              <button type="submit" class="btn btn-sm btn-primary">Responder</button>
+            </form>
+          {% endif %}
         </div>
       </div>
     {% empty %}
@@ -155,22 +160,16 @@
     {% endfor %}
   </ul>
 
-  <!-- Script para manejar Responder -->
+  <!-- Script estilo YT -->
   <script>
   document.addEventListener("DOMContentLoaded", function() {
-    const buttons = document.querySelectorAll(".reply-btn");
-    const textarea = document.querySelector("#review-textarea");
-    const parentInput = document.querySelector("#parent-id");
-
-    buttons.forEach(btn => {
+    const toggles = document.querySelectorAll(".reply-toggle");
+    toggles.forEach(btn => {
       btn.addEventListener("click", function(e) {
         e.preventDefault();
-        const username = this.dataset.username;
         const reviewId = this.dataset.review;
-
-        textarea.value = "@" + username + " ";
-        textarea.focus();
-        parentInput.value = reviewId;
+        const form = document.getElementById("reply-form-" + reviewId);
+        form.style.display = (form.style.display === "none" ? "block" : "none");
       });
     });
   });
