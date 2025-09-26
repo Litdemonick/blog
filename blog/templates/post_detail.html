@@ -136,7 +136,7 @@
   <h4>Comentarios</h4>
   <ul class="list-unstyled">
     {% for c in comments %}
-      <li class="comment border rounded p-2 mb-2">
+      <li class="comment border rounded p-2 mb-2" id="comment-{{ c.id }}">
         <p class="mb-1">{{ c.text }}</p>
         <small class="post-meta">
           Por {{ c.author|default:"Anónimo" }} – {{ c.created|date:"d/m/Y g:i A" }}
@@ -144,7 +144,16 @@
         <br>
         <small class="badge text-bg-secondary">Estado: {{ c.get_status_display }}</small>
 
-        <!-- Moderación de comentarios -->
+        <!-- Botón de Responder visible para TODOS los usuarios logueados -->
+        {% if user.is_authenticated %}
+          <a href="#" class="reply-btn btn btn-sm btn-outline-primary mt-2"
+             data-username="{{ c.author.username|default:c.author }}"
+             data-comment="{{ c.id }}">
+            Responder
+          </a>
+        {% endif %}
+
+        <!-- Moderación de comentarios (solo dueño del post) -->
         {% if is_owner %}
           <div class="mt-2">
             <form method="post" action="{% url 'blog:moderate_comment' c.id 'approve' %}" style="display:inline;">
@@ -166,5 +175,41 @@
       <p class="post-meta">No hay comentarios aún.</p>
     {% endfor %}
   </ul>
+
+  <!-- Formulario de nuevo comentario -->
+  {% if user.is_authenticated %}
+    <h4>Deja un comentario</h4>
+    <form method="post" action="{% url 'blog:add_comment' object.slug %}">
+      {% csrf_token %}
+      <textarea id="comment-textarea" name="text" rows="3" class="form-control mb-2"
+                placeholder="Escribe tu comentario..." required></textarea>
+      <input type="hidden" name="parent_id" id="parent-id">
+      <button type="submit" class="btn btn-success">Comentar</button>
+    </form>
+  {% else %}
+    <p><a href="{% url 'blog:login' %}">Inicia sesión</a> para dejar un comentario.</p>
+  {% endif %}
+
+  <!-- Script para el botón Responder -->
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const buttons = document.querySelectorAll(".reply-btn");
+    const textarea = document.querySelector("#comment-textarea");
+    const parentInput = document.querySelector("#parent-id");
+
+    buttons.forEach(btn => {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        const username = this.dataset.username;
+        const commentId = this.dataset.comment;
+
+        textarea.value = "@" + username + " " + textarea.value;
+        textarea.focus();
+        parentInput.value = commentId;
+      });
+    });
+  });
+  </script>
+
 </article>
 {% endblock %}
