@@ -51,14 +51,14 @@
 
   <hr>
 
-  <!-- Formulario principal de reseña -->
+  <!-- Formulario de reseña principal -->
   <h4>Deja tu reseña</h4>
   {% if user.is_authenticated %}
     <form method="post" action="{% url 'blog:add_review' object.slug %}" class="mb-4">
       {% csrf_token %}
       <div class="mb-3">
         <label for="id_rating" class="form-label">Tu calificación (1 a 5)</label>
-        <select name="rating" id="id_rating" class="form-select" required>
+        <select name="rating" id="id_rating" class="form-select">
           <option value="">Selecciona...</option>
           <option value="1">⭐ 1 - Muy malo</option>
           <option value="2">⭐⭐ 2 - Malo</option>
@@ -67,8 +67,14 @@
           <option value="5">⭐⭐⭐⭐⭐ 5 - Excelente</option>
         </select>
       </div>
-      <textarea name="comment" rows="3" class="form-control mb-2"
+
+      <!-- Campo comentario principal -->
+      <textarea id="review-textarea" name="comment" rows="3" class="form-control mb-2"
                 placeholder="Escribe tu opinión..." required></textarea>
+
+      <!-- Campo oculto: solo se llena si es respuesta -->
+      <input type="hidden" name="parent_id" id="parent-id">
+
       <button type="submit" class="btn btn-success w-100">Enviar</button>
     </form>
   {% else %}
@@ -114,7 +120,7 @@
             </a>
           {% endif %}
 
-          <!-- Moderación (solo dueño) -->
+          <!-- Moderación de reseñas (solo dueño del post) -->
           {% if is_owner %}
             <div class="mt-2">
               <form method="post" action="{% url 'blog:moderate_review' r.id 'approve' %}" style="display:inline;">
@@ -132,17 +138,7 @@
             </div>
           {% endif %}
 
-          <!-- Respuestas -->
-          {% for reply in r.replies.all %}
-            <div class="ms-4 mt-2 p-2 border-start">
-              <p class="mb-1">{{ reply.comment }}</p>
-              <small class="post-meta">
-                Por {{ reply.user.username|default:"Anónimo" }} – {{ reply.created|date:"d/m/Y g:i A" }}
-              </small>
-            </div>
-          {% endfor %}
-
-          <!-- Formulario inline de respuesta (oculto por defecto) -->
+          <!-- Formulario de respuesta (oculto al inicio) -->
           {% if user.is_authenticated %}
             <form method="post" action="{% url 'blog:add_review' object.slug %}" 
                   class="reply-form mt-2" id="reply-form-{{ r.id }}" style="display:none;">
@@ -150,8 +146,27 @@
               <input type="hidden" name="parent_id" value="{{ r.id }}">
               <textarea name="comment" rows="2" class="form-control mb-2"
                         placeholder="Responde a {{ r.user.username }}..." required></textarea>
-              <button type="submit" class="btn btn-sm btn-primary">Responder</button>
+              <button type="submit" class="btn btn-sm btn-success">Enviar</button>
             </form>
+          {% endif %}
+
+          <!-- Botón Ver respuestas -->
+          {% if r.replies.count > 0 %}
+            <a href="#" class="toggle-replies d-block mt-2 text-primary small"
+               data-review="{{ r.id }}">
+              Ver {{ r.replies.count }} respuesta{{ r.replies.count|pluralize }}
+            </a>
+
+            <div class="replies-list ms-4 mt-2" id="replies-{{ r.id }}" style="display:none;">
+              {% for reply in r.replies.all %}
+                <div class="p-2 border-start">
+                  <p class="mb-1">{{ reply.comment }}</p>
+                  <small class="post-meta">
+                    Por {{ reply.user.username|default:"Anónimo" }} – {{ reply.created|date:"d/m/Y g:i A" }}
+                  </small>
+                </div>
+              {% endfor %}
+            </div>
           {% endif %}
         </div>
       </div>
@@ -160,9 +175,10 @@
     {% endfor %}
   </ul>
 
-  <!-- Script estilo YT -->
+  <!-- Script -->
   <script>
   document.addEventListener("DOMContentLoaded", function() {
+    // Toggle formulario de respuesta
     const toggles = document.querySelectorAll(".reply-toggle");
     toggles.forEach(btn => {
       btn.addEventListener("click", function(e) {
@@ -170,6 +186,24 @@
         const reviewId = this.dataset.review;
         const form = document.getElementById("reply-form-" + reviewId);
         form.style.display = (form.style.display === "none" ? "block" : "none");
+      });
+    });
+
+    // Toggle Ver respuestas
+    const replyButtons = document.querySelectorAll(".toggle-replies");
+    replyButtons.forEach(btn => {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        const reviewId = this.dataset.review;
+        const repliesDiv = document.getElementById("replies-" + reviewId);
+
+        if (repliesDiv.style.display === "none") {
+          repliesDiv.style.display = "block";
+          this.textContent = "Ocultar respuestas";
+        } else {
+          repliesDiv.style.display = "none";
+          this.textContent = `Ver ${repliesDiv.children.length} respuesta${repliesDiv.children.length > 1 ? "s" : ""}`;
+        }
       });
     });
   });
