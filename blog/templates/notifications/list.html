@@ -1,0 +1,12 @@
+<h2>🔔 Notificaciones</h2>
+<ul>
+  {% for n in notifications %}
+    <li class="{% if not n.is_read %}fw-bold{% endif %}">
+      {{ n.actor.username }} {{ n.verb }}
+      <a href="{{ n.get_absolute_url }}">Ver</a>
+      <small>{{ n.created_at|date:"d/m/Y H:i" }}</small>
+    </li>
+  {% empty %}
+    <li>No tienes notificaciones.</li>
+  {% endfor %}
+</ul>

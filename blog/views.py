@@ -14,6 +14,8 @@ from django.shortcuts import render, get_object_or_404
 from django.shortcuts import render
 from .models import Post
 from .models import Post
+import re
+from .models import Notification
 from .models import Post, Comment, Review, ReviewVote, PostBlock
 from .forms import SignUpForm, PostForm, ReviewForm, ProfileForm
 
@@ -129,6 +131,26 @@ class PostDetailView(DetailView):
         return ctx
 
 
+def procesar_menciones(comentario, actor, post):
+    """Detecta @username en el texto del comentario y crea notificaciones"""
+    patron = r'@(\w+)'  # Busca palabras después de @
+    usernames = re.findall(patron, comentario.text)
+
+    for uname in usernames:
+        try:
+            mencionado = User.objects.get(username=uname)
+            if mencionado != actor:  # no notificarse a sí mismo
+                Notification.objects.create(
+                    user=mencionado,
+                    actor=actor,
+                    verb="te mencionó en un comentario",
+                    target_post=post,
+                    target_comment=comentario
+                )
+        except User.DoesNotExist:
+            continue  # ignorar usuarios inexistentes
+
+
 # --------- Añadir reseña ----------
 @login_required
 def add_review(request, slug):
@@ -175,7 +197,6 @@ def post_by_platform(request, platform_slug):
 def add_comment(request, slug):
     post = get_object_or_404(Post, slug=slug, status="published")
 
-    # 🔥 Verificar si el usuario está bloqueado
     if PostBlock.objects.filter(post=post, user=request.user).exists():
         messages.error(request, "Has sido bloqueado y no puedes comentar en este post.")
         return redirect(post.get_absolute_url())
@@ -183,14 +204,31 @@ def add_comment(request, slug):
     if request.method == "POST":
         text = request.POST.get("text")
         if text:
-            Comment.objects.create(
+            comentario = Comment.objects.create(
                 post=post,
                 author=request.user,
                 text=text,
                 status="pending"
             )
+            # 🔹 Aquí llamamos a la detección de menciones
+            procesar_menciones(comentario, request.user, post)
+
             messages.info(request, "Comentario enviado. Espera moderación del autor.")
     return redirect(post.get_absolute_url())
+
+
+@login_required
+def notification_list(request):
+    notifications = request.user.notifications.all().order_by("-created_at")
+    return render(request, "notifications/list.html", {"notifications": notifications})
+
+
+@login_required
+def notification_mark_read(request, pk):
+    n = get_object_or_404(Notification, pk=pk, user=request.user)
+    n.is_read = True
+    n.save()
+    return redirect("notification_list")
 
 
 

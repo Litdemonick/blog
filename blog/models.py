@@ -196,3 +196,39 @@ class ReviewVote(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.vote} en {self.review}"
+
+
+# ----------------------------
+# Notificaciones por menciones
+# ----------------------------
+class Notification(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="notifications"
+    )  # El que recibe la notificación
+    actor = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="sent_notifications"
+    )  # El que mencionó
+    verb = models.CharField(max_length=255)  # Ej: "te mencionó en un comentario"
+    target_post = models.ForeignKey(
+        Post, on_delete=models.CASCADE, null=True, blank=True
+    )
+    target_comment = models.ForeignKey(
+        Comment, on_delete=models.CASCADE, null=True, blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.actor} {self.verb} → {self.user}"
+
+    def get_absolute_url(self):
+        """Redirige al comentario si existe, sino al post."""
+        if self.target_comment:
+            return self.target_comment.post.get_absolute_url() + f"#comment-{self.target_comment.id}"
+        elif self.target_post:
+            return self.target_post.get_absolute_url()
+        return "#"
+
