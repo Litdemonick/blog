@@ -157,46 +157,52 @@ def add_review(request, slug):
     post = get_object_or_404(Post, slug=slug, status='published')
 
     if PostBlock.objects.filter(post=post, user=request.user).exists():
-        messages.error(request, "Has sido bloqueado y no puedes interactuar en este post.")
+        messages.error(request, "Has sido bloqueado y no puedes dejar reseñas en este post.")
         return redirect(post.get_absolute_url())
 
     if request.method == "POST":
         parent_id = request.POST.get("parent_id")
         comment = request.POST.get("comment", "")
-        rating = request.POST.get("rating")
+        rating = request.POST.get("rating")  # rating puede venir vacío si es respuesta
 
-        if parent_id:  # 🔹 Es una respuesta a otra reseña
+        # 🔹 Caso: respuesta a otra reseña
+        if parent_id:
             parent = Review.objects.filter(id=parent_id, post=post).first()
-            review = Review.objects.create(
-                post=post,
-                user=request.user,
-                parent=parent,
-                comment=comment,
-                status="visible"  # ✅ respuestas se publican directo
-            )
-            # Notificar al autor de la reseña original
-            if parent and parent.user != request.user:
-                Notification.objects.create(
-                    user=parent.user,
-                    actor=request.user,
-                    verb="respondió a tu reseña",
-                    target_post=post
+            if parent:
+                reply = Review.objects.create(
+                    post=post,
+                    user=request.user,
+                    parent=parent,
+                    comment=comment,
+                    status="visible"  # respuestas siempre visibles
                 )
-        else:  # 🔹 Es reseña inicial (con rating obligatorio)
-            if not rating:
-                messages.error(request, "Debes elegir una calificación (1 a 5).")
+                # Notificar al autor de la reseña original
+                if parent.user != request.user:
+                    Notification.objects.create(
+                        user=parent.user,
+                        actor=request.user,
+                        verb="respondió a tu reseña",
+                        target_post=post,
+                    )
+                messages.success(request, "Respuesta enviada correctamente.")
                 return redirect(post.get_absolute_url())
 
-            review = Review.objects.create(
-                post=post,
-                user=request.user,
-                rating=rating,
-                comment=comment,
-                status="pending"  # ✅ requiere aprobación
+        # 🔹 Caso: reseña nueva
+        if rating:
+            obj, created = Review.objects.get_or_create(
+                post=post, user=request.user,
+                defaults={'rating': rating, 'comment': comment, 'status': 'pending'}
             )
-            messages.info(request, "Tu reseña fue enviada. Espera aprobación del autor.")
-
-        procesar_menciones(review, request.user, post)
+            if not created:
+                obj.rating = rating
+                obj.comment = comment
+                obj.status = 'pending'
+                obj.save()
+                messages.info(request, 'Tu reseña fue actualizada. Espera aprobación del autor.')
+            else:
+                messages.success(request, '¡Tu reseña fue enviada! Espera aprobación del autor.')
+        else:
+            messages.error(request, "Debes dar una calificación si es reseña nueva.")
 
     return redirect(post.get_absolute_url())
 
@@ -221,37 +227,36 @@ def add_comment(request, slug):
         return redirect(post.get_absolute_url())
 
     if request.method == "POST":
-     text = request.POST.get("text")
-    parent_id = request.POST.get("parent_id")  # ✅ capturamos el padre
+        text = request.POST.get("text")
+        parent_id = request.POST.get("parent_id")  # ✅ capturamos el padre
 
-    if text:
-        parent = None
-        if parent_id:
-            parent = Comment.objects.filter(id=parent_id).first()
+        if text:
+            parent = None
+            if parent_id:
+                parent = Comment.objects.filter(id=parent_id).first()
 
-        comentario = Comment.objects.create(
-            post=post,
-            author=request.user,
-            text=text,
-            parent=parent,   # ✅ guardamos el padre aquí
-            status="pending"
-        )
-
-        # ✅ Notificar al autor del comentario padre
-        if parent and parent.author and parent.author != request.user:
-            Notification.objects.create(
-                user=parent.author,
-                actor=request.user,
-                verb="respondió a tu comentario",
-                target_post=post,
-                target_comment=comentario
+            comentario = Comment.objects.create(
+                post=post,
+                author=request.user,
+                text=text,
+                parent=parent,   # ✅ guardamos el padre aquí
+                status="pending"
             )
 
-        # ✅ Procesar menciones con @usuario
-        procesar_menciones(comentario, request.user, post)
+            # ✅ Notificar al autor del comentario padre
+            if parent and parent.author and parent.author != request.user:
+                Notification.objects.create(
+                    user=parent.author,
+                    actor=request.user,
+                    verb="respondió a tu comentario",
+                    target_post=post,
+                    target_comment=comentario
+                )
 
-        messages.info(request, "Comentario enviado. Espera moderación del autor.")
+            # ✅ Procesar menciones con @usuario
+            procesar_menciones(comentario, request.user, post)
 
+            messages.info(request, "Comentario enviado. Espera moderación del autor.")
 
     return redirect(post.get_absolute_url())
 
