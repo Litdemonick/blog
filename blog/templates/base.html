@@ -289,6 +289,38 @@
         {% endif %}
       </ul>
       <form class="d-flex ms-3" method="get" action="{% url 'blog:search' %}">
+        <!-- 🔔 Notificaciones -->
+<div class="dropdown ms-3">
+  <a href="#" class="nav-link position-relative" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+    🔔
+    {% if unread_count > 0 %}
+      <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+        {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
+      </span>
+    {% endif %}
+  </a>
+
+  <!-- Dropdown de notificaciones -->
+  <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="notifDropdown" style="min-width: 300px; max-height: 400px; overflow-y: auto;">
+    {% if request.user.is_authenticated %}
+      {% for n in request.user.notifications.all|slice:":5" %}
+        <li class="d-flex align-items-center mb-2 {% if not n.is_read %}fw-bold{% endif %}">
+          <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+               alt="avatar" class="rounded-circle me-2" width="40" height="40">
+          <div>
+            <div>{{ n.actor.username }} {{ n.verb }}</div>
+            <small class="text-muted">{{ n.created_at|date:"d/m H:i" }}</small>
+          </div>
+        </li>
+      {% empty %}
+        <li class="text-muted">No tienes notificaciones.</li>
+      {% endfor %}
+    {% else %}
+      <li class="text-muted">Inicia sesión para ver notificaciones.</li>
+    {% endif %}
+  </ul>
+</div>
+
         <input class="form-control" type="search" name="q" placeholder="Buscar...">
       </form>
     </div>

@@ -191,18 +191,19 @@ def post_by_platform(request, platform_slug):
 
 
 # --------- Añadir comentario ----------
-
-
 @login_required
 def add_comment(request, slug):
     post = get_object_or_404(Post, slug=slug, status="published")
 
+    # 🔒 Revisar si el usuario está bloqueado en este post
     if PostBlock.objects.filter(post=post, user=request.user).exists():
         messages.error(request, "Has sido bloqueado y no puedes comentar en este post.")
         return redirect(post.get_absolute_url())
 
     if request.method == "POST":
         text = request.POST.get("text")
+        parent_id = request.POST.get("parent_id")  # ✅ se captura el parent_id del hidden input
+
         if text:
             comentario = Comment.objects.create(
                 post=post,
@@ -210,10 +211,24 @@ def add_comment(request, slug):
                 text=text,
                 status="pending"
             )
-            # 🔹 Aquí llamamos a la detección de menciones
+
+            # ✅ Notificar al autor del comentario padre si existe
+            if parent_id:
+                parent = Comment.objects.filter(id=parent_id).first()
+                if parent and parent.author and parent.author != request.user:
+                    Notification.objects.create(
+                        user=parent.author,
+                        actor=request.user,
+                        verb="respondió a tu comentario",
+                        target_post=post,
+                        target_comment=comentario
+                    )
+
+            # ✅ Procesar menciones con @usuario
             procesar_menciones(comentario, request.user, post)
 
             messages.info(request, "Comentario enviado. Espera moderación del autor.")
+
     return redirect(post.get_absolute_url())
 
 

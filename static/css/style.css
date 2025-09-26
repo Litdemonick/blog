@@ -1,14 +1,35 @@
-/* Colores claros para texto en modo oscuro */
-.review, .review p, .review small,
-.comment, .comment p, .comment small {
+/* 💬 Estilo gamer para reseñas y comentarios */
+.review, .comment {
+  background: #1a1a1a;              /* fondo oscuro */
+  border: 1px solid #2a2a2a;        /* borde gris sutil */
+  border-left: 4px solid #ff3c00;   /* barra gamer naranja */
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 12px;
   color: #f5f5f5 !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.review:hover, .comment:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px rgba(255, 60, 0, 0.5);
+}
+
+/* Texto dentro */
+.review p, .comment p,
+.review small, .comment small {
+  color: #ddd !important;
+  margin: 4px 0;
+}
+
+/* Links en comentarios (menciones o responder) */
 .review a, .comment a {
-  color: #0dcaf0 !important;   /* celeste Bootstrap */
+  color: #0dcaf0 !important;        /* celeste gamer */
+  font-weight: 600;
   text-decoration: none;
 }
 
 .review a:hover, .comment a:hover {
   color: #0bbbe6 !important;
+  text-decoration: underline;
 }
