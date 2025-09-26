@@ -120,12 +120,20 @@ class Comment(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created = models.DateTimeField(auto_now_add=True)
 
+    # 🔹 Nuevo: relación para respuestas
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="replies"
+    )
+
     class Meta:
         ordering = ["-created"]
 
     def __str__(self):
         return f"Comentario de {self.author} en {self.post}"
-
 
 # ----------------------------
 # Reseñas (con rating y moderación)

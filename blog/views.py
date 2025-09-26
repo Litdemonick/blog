@@ -201,33 +201,37 @@ def add_comment(request, slug):
         return redirect(post.get_absolute_url())
 
     if request.method == "POST":
-        text = request.POST.get("text")
-        parent_id = request.POST.get("parent_id")  # ✅ se captura el parent_id del hidden input
+     text = request.POST.get("text")
+    parent_id = request.POST.get("parent_id")  # ✅ capturamos el padre
 
-        if text:
-            comentario = Comment.objects.create(
-                post=post,
-                author=request.user,
-                text=text,
-                status="pending"
+    if text:
+        parent = None
+        if parent_id:
+            parent = Comment.objects.filter(id=parent_id).first()
+
+        comentario = Comment.objects.create(
+            post=post,
+            author=request.user,
+            text=text,
+            parent=parent,   # ✅ guardamos el padre aquí
+            status="pending"
+        )
+
+        # ✅ Notificar al autor del comentario padre
+        if parent and parent.author and parent.author != request.user:
+            Notification.objects.create(
+                user=parent.author,
+                actor=request.user,
+                verb="respondió a tu comentario",
+                target_post=post,
+                target_comment=comentario
             )
 
-            # ✅ Notificar al autor del comentario padre si existe
-            if parent_id:
-                parent = Comment.objects.filter(id=parent_id).first()
-                if parent and parent.author and parent.author != request.user:
-                    Notification.objects.create(
-                        user=parent.author,
-                        actor=request.user,
-                        verb="respondió a tu comentario",
-                        target_post=post,
-                        target_comment=comentario
-                    )
+        # ✅ Procesar menciones con @usuario
+        procesar_menciones(comentario, request.user, post)
 
-            # ✅ Procesar menciones con @usuario
-            procesar_menciones(comentario, request.user, post)
+        messages.info(request, "Comentario enviado. Espera moderación del autor.")
 
-            messages.info(request, "Comentario enviado. Espera moderación del autor.")
 
     return redirect(post.get_absolute_url())
 
