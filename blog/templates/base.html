@@ -246,16 +246,13 @@
 
 <a href="{% url 'notification_list' %}" class="nav-link position-relative">
   🔔
-  {% if request.user.is_authenticated %}
-    {% with unread_count=request.user.notifications.filter(is_read=False).count %}
-      {% if unread_count > 0 %}
-        <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
-          {{ unread_count|default:"0" }}{% if unread_count > 9 %}+{% endif %}
-        </span>
-      {% endif %}
-    {% endwith %}
+  {% if unread_count > 0 %}
+    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+      {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
+    </span>
   {% endif %}
 </a>
+
 
 
 <nav class="navbar navbar-expand-lg navbar-dark">
