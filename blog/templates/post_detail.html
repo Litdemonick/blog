@@ -107,14 +107,19 @@
 
           <!-- Score y botones de voto -->
           <div class="mt-2 d-flex align-items-center gap-2">
-            <span>Score: {{ r.score }}</span>
             {% if user.is_authenticated %}
-              <a href="{% url 'blog:vote_review' r.id 'like' %}" class="btn btn-sm btn-outline-success">👍</a>
-              <a href="{% url 'blog:vote_review' r.id 'dislike' %}" class="btn btn-sm btn-outline-danger">👎</a>
+              <a href="{% url 'blog:vote_review' r.id 'like' %}" class="btn btn-sm btn-outline-success">
+                👍 {{ r.likes_count }}
+              </a>
+              <a href="{% url 'blog:vote_review' r.id 'dislike' %}" class="btn btn-sm btn-outline-danger">
+                👎 {{ r.dislikes_count }}
+              </a>
             {% else %}
               <small>(Inicia sesión para votar)</small>
             {% endif %}
           </div>
+
+
 
           <!-- Botón Responder -->
           {% if user.is_authenticated %}
@@ -173,11 +178,15 @@
 
                     <!-- Score y votos respuesta -->
                     <div class="mt-1 d-flex align-items-center gap-2">
-                      <span>Score: {{ reply.score }}</span>
                       {% if user.is_authenticated %}
-                        <a href="{% url 'blog:vote_comment' reply.id 'up' %}" class="btn btn-sm btn-outline-success">👍</a>
-                        <a href="{% url 'blog:vote_comment' reply.id 'down' %}" class="btn btn-sm btn-outline-danger">👎</a>
-                        <a href="{% url 'blog:vote_comment' reply.id 'neutral' %}" class="btn btn-sm btn-outline-secondary">0</a>
+                        <a href="{% url 'blog:vote_comment' c.id 'up' %}" class="btn btn-sm btn-outline-success">
+                          👍 {{ c.likes_count }}
+                        </a>
+                        <a href="{% url 'blog:vote_comment' c.id 'down' %}" class="btn btn-sm btn-outline-danger">
+                          👎 {{ c.dislikes_count }}
+                        </a>
+                      {% else %}
+                        <small>(Inicia sesión para votar)</small>
                       {% endif %}
                     </div>
 
@@ -213,15 +222,18 @@
 
         <!-- Score y botones de voto -->
         <div class="mt-1 d-flex align-items-center gap-2">
-          <span>Score: {{ c.score }}</span>
           {% if user.is_authenticated %}
-            <a href="{% url 'blog:vote_comment' c.id 'up' %}" class="btn btn-sm btn-outline-success">👍</a>
-            <a href="{% url 'blog:vote_comment' c.id 'down' %}" class="btn btn-sm btn-outline-danger">👎</a>
-            <a href="{% url 'blog:vote_comment' c.id 'neutral' %}" class="btn btn-sm btn-outline-secondary">0</a>
+            <a href="{% url 'blog:vote_comment' c.id 'up' %}" class="btn btn-sm btn-outline-success">
+              👍 {{ c.votes.filter(value=1).count }}
+            </a>
+            <a href="{% url 'blog:vote_comment' c.id 'down' %}" class="btn btn-sm btn-outline-danger">
+              👎 {{ c.votes.filter(value=-1).count }}
+            </a>
           {% else %}
             <small>(Inicia sesión para votar)</small>
           {% endif %}
         </div>
+
       </div>
     {% empty %}
       <p>No hay comentarios.</p>

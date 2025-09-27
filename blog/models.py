@@ -201,11 +201,11 @@ class Review(models.Model):
 
     @property
     def likes_count(self):
-        return self.votes.filter(vote="like").count()
+        return self.votes.filter(value=1).count()
 
     @property
     def dislikes_count(self):
-        return self.votes.filter(vote="dislike").count()
+        return self.votes.filter(value=-1).count()
 
 
 # ----------------------------

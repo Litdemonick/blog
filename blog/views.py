@@ -66,7 +66,6 @@ def global_tags(request):
     return {"all_tags": Tag.objects.all()[:15]}  # mostrar solo los 15 primeros
 
 
-# --------- Votos en reseñas ----------
 @login_required
 def vote_review(request, pk, action):
     review = get_object_or_404(Review, pk=pk)
@@ -74,7 +73,6 @@ def vote_review(request, pk, action):
         messages.error(request, "Acción inválida.")
         return redirect(review.post.get_absolute_url())
 
-    # Buscar si ya votó
     vote, created = ReviewVote.objects.get_or_create(
         review=review, user=request.user,
         defaults={'vote': action}
@@ -92,6 +90,7 @@ def vote_review(request, pk, action):
         messages.success(request, f"¡Gracias por tu {action}!")
 
     return redirect(review.post.get_absolute_url())
+
 
 
 # --------- Listado / Búsqueda / Paginación ----------
@@ -463,32 +462,22 @@ def moderate_comment(request, pk, action):
 
 
 
-# --------- Votos en comentarios ----------
-from .models import CommentVote  # asegúrate de importar
-
 @login_required
 def vote_comment(request, pk, vote_type):
     comment = get_object_or_404(Comment, pk=pk)
     
-    if vote_type not in ['up', 'down', 'neutral']:
+    if vote_type not in ['up', 'down']:
         messages.error(request, "Acción inválida.")
         return redirect(comment.post.get_absolute_url())
 
-    # Crear o actualizar voto
+    value = 1 if vote_type == "up" else -1
+
     vote, created = CommentVote.objects.get_or_create(user=request.user, comment=comment)
+    if not created and vote.value == value:
+        vote.delete()  # quitar voto si repite
+    else:
+        vote.value = value
+        vote.save()
 
-    if vote_type == "up":
-        vote.value = 1
-    elif vote_type == "down":
-        vote.value = -1
-    elif vote_type == "neutral":
-        vote.value = 0
-
-    vote.save()
-
-    # Recalcular score del comentario
-    comment.score = sum(v.value for v in comment.votes.all())
-    comment.save()
-
-    messages.success(request, "Tu voto ha sido registrado.")
     return redirect(comment.post.get_absolute_url())
+
