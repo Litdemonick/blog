@@ -293,24 +293,54 @@
   </a>
 
   <!-- Dropdown de notificaciones -->
-  <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="notifDropdown" style="min-width: 300px; max-height: 400px; overflow-y: auto;">
-    {% if request.user.is_authenticated %}
-      {% for n in request.user.notifications.all|slice:":5" %}
-        <li class="d-flex align-items-center mb-2 {% if not n.is_read %}fw-bold{% endif %}">
-          <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
-               alt="avatar" class="rounded-circle me-2" width="40" height="40">
-          <div>
-            <div>{{ n.actor.username }} {{ n.verb }}</div>
-            <small class="text-muted">{{ n.created_at|date:"d/m H:i" }}</small>
-          </div>
-        </li>
-      {% empty %}
-        <li class="text-muted">No tienes notificaciones.</li>
-      {% endfor %}
-    {% else %}
-      <li class="text-muted">Inicia sesión para ver notificaciones.</li>
-    {% endif %}
-  </ul>
+<ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="notifDropdown" 
+    style="min-width: 350px; max-height: 400px; overflow-y: auto;">
+  {% if request.user.is_authenticated %}
+    {% for n in request.user.notifications.all|slice:":5" %}
+      <li class="d-flex align-items-start mb-3 {% if not n.is_read %}fw-bold{% endif %}">
+        <!-- Avatar -->
+        <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+             alt="avatar" class="rounded-circle me-2" width="40" height="40">
+
+        <!-- Contenido -->
+        <div class="flex-grow-1">
+          <a href="{% url 'blog:profile_detail' n.actor.username %}" class="text-decoration-none fw-bold text-light">
+            {{ n.actor.username }}
+          </a>
+          {{ n.verb }} en 
+          <a href="{{ n.target_post.get_absolute_url }}" class="text-warning">
+            {{ n.target_post.title }}
+          </a>
+          <div class="text-muted small">{{ n.created_at|date:"d/m/Y H:i" }}</div>
+        </div>
+
+        <!-- Botón 3 puntitos -->
+        <div class="dropdown">
+          <a href="#" class="text-muted" id="notifOptions{{ n.id }}" data-bs-toggle="dropdown">
+            ⋮
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="notifOptions{{ n.id }}">
+            <li>
+              <a class="dropdown-item" href="{% url 'blog:notification_mark_read' n.id %}">
+                Marcar como leída
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'blog:notification_disable_user' n.actor.id %}">
+                Desactivar notificaciones de {{ n.actor.username }}
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+    {% empty %}
+      <li class="text-muted">No tienes notificaciones.</li>
+    {% endfor %}
+  {% else %}
+    <li class="text-muted">Inicia sesión para ver notificaciones.</li>
+  {% endif %}
+</ul>
+
 </div>
 
         <input class="form-control" type="search" name="q" placeholder="Buscar...">
@@ -340,5 +370,21 @@
     </p>
   </div>
 </footer>
+
+
+
+<!-- 🔥 Script para notificaciones -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const notifDropdown = document.getElementById("notifDropdown");
+  const badge = notifDropdown.querySelector(".badge");
+
+  notifDropdown.addEventListener("click", () => {
+    if (badge) {
+      badge.style.display = "none";  // ocultar número cuando se abre
+    }
+  });
+});
+</script>
 </body>
 </html>

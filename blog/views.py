@@ -185,19 +185,19 @@ def add_review(request, slug):
                     comment=comment,
                     status="visible"  # respuestas siempre visibles
                 )
-                # ⚡ Notificar al autor de la reseña original si no lo bloqueó
+                # Notificación al autor de la reseña original
                 if parent.user != request.user:
-                    if not NotificationBlock.objects.filter(blocker=parent.user, blocked_user=request.user).exists():
-                        Notification.objects.create(
-                            user=parent.user,
-                            actor=request.user,
-                            verb="respondió a tu reseña",
-                            target_post=post,
-                        )
+                    Notification.objects.create(
+                        user=parent.user,
+                        actor=request.user,
+                        verb="respondió a tu reseña",
+                        target_post=post,
+                        target_comment=reply,
+                    )
                 messages.success(request, "Respuesta enviada correctamente.")
-                return redirect(post.get_absolute_url())
+            return redirect(post.get_absolute_url())
 
-        # 🔹 Caso: reseña nueva
+        # 🔹 Caso: reseña nueva (solo si NO hay parent_id)
         if rating:
             obj, created = Review.objects.get_or_create(
                 post=post, user=request.user,
@@ -215,6 +215,7 @@ def add_review(request, slug):
             messages.error(request, "Debes dar una calificación si es reseña nueva.")
 
     return redirect(post.get_absolute_url())
+
 
 
 
