@@ -47,7 +47,7 @@
 
         <!-- Fecha -->
         <small class="text-secondary">
-          {{ n.created_at|date:"d/m/Y g:i A" }}
+          {{ n.created_at|date:"d/m/Y g:i A" }}  {# ✅ ahora muestra AM/PM #}
         </small>
       </div>
 
@@ -66,7 +66,9 @@
           <li>
             <form method="post" action="{% url 'notification_disable_user' n.actor.id %}">
               {% csrf_token %}
-              <button type="submit" class="dropdown-item text-danger">Desactivar notificaciones de {{ n.actor.username }}</button>
+              <button type="submit" class="dropdown-item text-danger">
+                Desactivar notificaciones de {{ n.actor.username }}
+              </button>
             </form>
           </li>
         </ul>
