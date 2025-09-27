@@ -136,7 +136,8 @@ class Comment(models.Model):
     pinned = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-pinned", "-created"]  # 👈 fijados arriba, luego por fecha
+
 
     def __str__(self):
         return f"Comentario de {self.author} en {self.post}"
@@ -194,12 +195,14 @@ class Review(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
     rating = models.PositiveSmallIntegerField(
+    
         validators=[MinValueValidator(1), MaxValueValidator(5)],
         null=True, blank=True
     )  # ⭐ Puede ser vacío si es solo respuesta
     comment = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created = models.DateTimeField(auto_now_add=True)
+    pinned = models.BooleanField(default=False) 
 
     class Meta:
         ordering = ['-created']

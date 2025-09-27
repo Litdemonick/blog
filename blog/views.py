@@ -92,6 +92,29 @@ def vote_review(request, pk, action):
     return redirect(review.post.get_absolute_url())
 
 
+@login_required
+def pin_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    if request.user == review.post.author:  # Solo el dueño del post puede fijar
+        review.pinned = True
+        review.save()
+        messages.success(request, "Reseña fijada correctamente 📌")
+    else:
+        messages.error(request, "No tienes permisos para fijar esta reseña.")
+    return redirect("blog:post_detail", slug=review.post.slug)
+
+
+@login_required
+def unpin_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id)
+    if request.user == review.post.author:
+        review.pinned = False
+        review.save()
+        messages.success(request, "Reseña desfijada correctamente ❌")
+    else:
+        messages.error(request, "No tienes permisos para desfijar esta reseña.")
+    return redirect("blog:post_detail", slug=review.post.slug)
+
 
 # --------- Listado / Búsqueda / Paginación ----------
 class PostListView(ListView):

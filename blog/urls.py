@@ -61,4 +61,9 @@ urlpatterns = [
     path("post/<slug:slug>/review/respuesta/", views.add_review, name="add_review_reply"),
 
 
+
+    path("review/<int:review_id>/pin/", views.pin_review, name="pin_review"),
+    path("review/<int:review_id>/unpin/", views.unpin_review, name="unpin_review"),
+
+
 ]
