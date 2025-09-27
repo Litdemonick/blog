@@ -131,7 +131,7 @@
 }
 
 /* ===============================
-   🔔 Estilo gamer de notificaciones
+   🔔 Estilo gamer de notificaciones - CORREGIDO
    =============================== */
 
 /* Fondo del dropdown */
@@ -239,35 +239,60 @@
   color: #fff !important;
 }
 
-/* Escritorio grande */
+/* 🔔 CAMPANA CORREGIDA - SIN SCROLL HORIZONTAL */
 .notif-bell {
-  position: absolute;
-  right: -425px;
-  top: 1px;
-  font-size: 2rem;
+  position: relative;
+  font-size: 1.8rem;
   color: #ff3c00 !important;
   transition: transform 0.2s, text-shadow 0.2s;
+  margin-left: 5px;
 }
 
-/* Laptops */
-@media (max-width: 1600px) {
-  .notif-bell { right: -280px; }
+.notif-bell:hover {
+  transform: scale(1.2);
+  text-shadow: 0 0 10px rgba(255,60,0,0.8);
 }
 
-@media (max-width: 1366px) {
-  .notif-bell { right: -180px; }
+/* Badge rojo - POSICIÓN CORREGIDA */
+.notif-bell .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 0.7rem;
+  padding: 0.25em 0.4em;
 }
 
-/* Tablets */
-@media (max-width: 1024px) {
-  .notif-bell { right: -80px; }
+/* 🔹 Dropdown de notificaciones - POSICIÓN CORREGIDA */
+.notif-dropdown {
+  background: #1a1a1a !important;
+  border: 1px solid #333 !important;
+  border-radius: 8px;
+  min-width: 350px;
+  max-width: 400px;
+  color: #fff !important;
+  left: auto !important;
+  right: 0 !important;
 }
 
-/* Celulares */
-@media (max-width: 768px) {
+/* Ajustes responsivos para el dropdown */
+@media (max-width: 992px) {
+  .notif-dropdown {
+    position: fixed !important;
+    right: 10px !important;
+    left: auto !important;
+    max-width: calc(100vw - 20px);
+  }
+}
+
+@media (max-width: 576px) {
+  .notif-dropdown {
+    min-width: 300px;
+    max-width: 95vw;
+    right: 10px !important;
+    left: auto !important;
+  }
   .notif-bell {
-    right: -20px;
     font-size: 1.6rem;
-    top: 4px;
+    margin-left: 10px;
   }
 }
