@@ -115,23 +115,20 @@
             </button>
           {% endif %}
 
-          <!-- Moderación -->
-          {% if is_owner %}
-            <div class="mt-2">
-              <form method="post" action="{% url 'blog:moderate_review' r.id 'approve' %}" style="display:inline;">
-                {% csrf_token %}<button class="btn btn-sm btn-success">Aprobar</button>
-              </form>
-              <form method="post" action="{% url 'blog:moderate_review' r.id 'hide' %}" style="display:inline;">
-                {% csrf_token %}<button class="btn btn-sm btn-warning">Ocultar</button>
-              </form>
-              <form method="post" action="{% url 'blog:moderate_review' r.id 'block' %}" style="display:inline;">
-                {% csrf_token %}<button class="btn btn-sm btn-danger">Bloquear</button>
-              </form>
-              <form method="post" action="{% url 'blog:moderate_review' r.id 'delete' %}" style="display:inline;">
-                {% csrf_token %}<button class="btn btn-sm btn-dark">Eliminar</button>
-              </form>
-            </div>
-          {% endif %}
+         <!-- Moderación -->
+            {% if is_owner %}
+              <div class="mt-2">
+                <form method="post" action="{% url 'blog:moderate_review' r.id 'hide' %}" style="display:inline;">
+                  {% csrf_token %}<button class="btn btn-sm btn-warning">Ocultar</button>
+                </form>
+                <form method="post" action="{% url 'blog:moderate_review' r.id 'block' %}" style="display:inline;">
+                  {% csrf_token %}<button class="btn btn-sm btn-danger">Bloquear</button>
+                </form>
+                <form method="post" action="{% url 'blog:moderate_review' r.id 'delete' %}" style="display:inline;">
+                  {% csrf_token %}<button class="btn btn-sm btn-dark">Eliminar</button>
+                </form>
+              </div>
+            {% endif %}
 
           <!-- Botón Ver respuestas -->
           {% if r.replies.count > 0 %}

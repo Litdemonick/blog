@@ -169,6 +169,7 @@ def procesar_menciones(comentario, actor, post):
 
 
 # --------- Añadir reseña ----------
+# --------- Añadir reseña ----------
 @login_required
 def add_review(request, slug):
     post = get_object_or_404(Post, slug=slug, status='published')
@@ -187,7 +188,7 @@ def add_review(request, slug):
                     user=request.user,
                     parent=parent,
                     comment=comment,
-                    status="visible"
+                    status="visible"   # ✅ directo visible
                 )
                 # Notificación al autor original
                 if parent.user != request.user:
@@ -196,8 +197,7 @@ def add_review(request, slug):
                         actor=request.user,
                         verb="respondió a tu reseña",
                         target_post=post,
-                        # OJO: como es Review, no Comment
-                        # Usa otro campo o crea uno target_review si quieres diferenciar
+                        target_review=parent   # ✅ mejor referencia a la reseña padre
                     )
                 messages.success(request, "Respuesta publicada.")
             return redirect(post.get_absolute_url())
@@ -209,13 +209,14 @@ def add_review(request, slug):
                 user=request.user,
                 rating=rating,
                 comment=comment,
-                status="pending"  # moderación del autor
+                status="visible"   # ✅ directo visible
             )
-            messages.success(request, "¡Tu reseña fue enviada! Espera aprobación del autor.")
+            messages.success(request, "¡Tu reseña fue publicada!")
         else:
             messages.error(request, "Debes dar una calificación para publicar una reseña.")
 
     return redirect(post.get_absolute_url())
+
 
 
 
@@ -266,7 +267,7 @@ def add_comment(request, slug):
                 author=request.user,
                 text=text,
                 parent=parent,   # ✅ guardamos el padre si existe
-                status="pending"
+                status="visible"  # ✅ directo visible
             )
 
             # ⚡ Notificar al autor del comentario padre (si no bloqueó al actor)
@@ -279,6 +280,7 @@ def add_comment(request, slug):
                         target_post=post,
                         target_comment=comentario
                     )
+
             # ⚡ Notificar al autor del post principal (si no es el mismo que comenta)
             if post.author != request.user:
                 if not NotificationBlock.objects.filter(blocker=post.author, blocked_user=request.user).exists():
@@ -288,15 +290,12 @@ def add_comment(request, slug):
                         verb="comentó en tu publicación",
                         target_post=post,
                         target_comment=comentario
-        )
-
+                    )
 
             # ✅ Procesar menciones con @usuario
             procesar_menciones(comentario, request.user, post)
 
-            messages.info(request, "Comentario enviado. Espera moderación del autor.")
-
-        
+            messages.success(request, "Comentario publicado.")
 
     return redirect(post.get_absolute_url())
 
@@ -387,6 +386,7 @@ def profile_edit(request):
 
 
 # --------- Moderación de reseñas ----------
+@login_required
 def moderate_review(request, pk, action):
     review = get_object_or_404(Review, pk=pk)
 
@@ -394,11 +394,7 @@ def moderate_review(request, pk, action):
     if request.user != review.post.author:
         return HttpResponseForbidden("No autorizado")
 
-    if action == "approve":
-        review.status = "visible"
-        review.save()
-        messages.success(request, "Reseña aprobada y visible.")
-    elif action == "hide":
+    if action == "hide":
         review.status = "hidden"
         review.save()
         messages.info(request, "Reseña ocultada.")
@@ -424,6 +420,7 @@ def moderate_review(request, pk, action):
     return redirect("blog:post_detail", slug=review.post.slug)
 
 
+
 # --------- Moderación de comentarios ----------
 from .models import Comment, PostBlock
 
@@ -434,20 +431,17 @@ def moderate_comment(request, pk, action):
     if request.user != comment.post.author:
         return HttpResponseForbidden("No autorizado")
 
-    if action == "approve":
-        comment.status = "visible"
-        comment.save()
-    elif action == "hide":
+    # ❌ Quitamos "approve"
+    if action == "hide":
         comment.status = "hidden"
         comment.save()
     elif action == "block":
-        # bloquear/desbloquear al usuario
         block, created = PostBlock.objects.get_or_create(
             post=comment.post,
             user=comment.author
         )
         if not created:
-            block.delete()  # ya estaba bloqueado → desbloqueamos
+            block.delete()
         comment.status = "blocked"
         comment.save()
     elif action == "delete":
