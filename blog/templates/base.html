@@ -1,5 +1,5 @@
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}?v=11">
 
 <!doctype html>
 <html lang="es">
@@ -29,7 +29,7 @@
     .navbar {
       background: #1a1a1a !important;
       border-bottom: 2px solid #ff3c00;
-      position: relative; /* 🔥 necesario para posicionar la campana */
+      position: relative;
     }
     .navbar-brand {
       font-weight: 700;
@@ -61,7 +61,7 @@
     /* Campanita 🔔 */
     .notif-bell {
       position: absolute;
-      right: -425px;    /* posición para escritorio grande */
+      right: -425px;
       top: 1px;
       font-size: 2rem;
       color: #ff3c00 !important;
@@ -123,7 +123,6 @@
       width: 100%;
       transition: all 0.2s ease-in-out;
     }
-
     input:focus,
     textarea:focus,
     select:focus {
@@ -246,6 +245,10 @@
       .notif-bell { right: -200px; top: 2px; }
       #notifDropdown + .dropdown-menu { right: -200px !important; }
     }
+    @media (max-width: 1200px) {
+      .notif-bell { right: -100px; top: 2px; }
+      #notifDropdown + .dropdown-menu { right: -100px !important; }
+    }
     @media (max-width: 992px) {
       .notif-bell { position: relative; right: 0; margin-left: 15px; }
       #notifDropdown + .dropdown-menu { right: 0 !important; left: auto !important; }
@@ -259,11 +262,6 @@
         margin-right: auto;
         font-size: 1.6rem;
       }
-    @media (max-width: 1200px) {
-      .notif-bell { right: -100px; top: 2px; }
-      #notifDropdown + .dropdown-menu { right: -100px !important; }
-    }
-
       .notif-dropdown {
         min-width: 95vw;
         left: 2.5vw !important;
