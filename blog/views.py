@@ -460,3 +460,35 @@ def moderate_comment(request, pk, action):
         return HttpResponseForbidden("Acción no válida")
 
     return redirect("blog:post_detail", slug=comment.post.slug)
+
+
+
+# --------- Votos en comentarios ----------
+from .models import CommentVote  # asegúrate de importar
+
+@login_required
+def vote_comment(request, pk, vote_type):
+    comment = get_object_or_404(Comment, pk=pk)
+    
+    if vote_type not in ['up', 'down', 'neutral']:
+        messages.error(request, "Acción inválida.")
+        return redirect(comment.post.get_absolute_url())
+
+    # Crear o actualizar voto
+    vote, created = CommentVote.objects.get_or_create(user=request.user, comment=comment)
+
+    if vote_type == "up":
+        vote.value = 1
+    elif vote_type == "down":
+        vote.value = -1
+    elif vote_type == "neutral":
+        vote.value = 0
+
+    vote.save()
+
+    # Recalcular score del comentario
+    comment.score = sum(v.value for v in comment.votes.all())
+    comment.save()
+
+    messages.success(request, "Tu voto ha sido registrado.")
+    return redirect(comment.post.get_absolute_url())

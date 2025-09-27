@@ -31,6 +31,9 @@ urlpatterns = [
     path("post/<slug:slug>/comentar/", views.add_comment, name="add_comment"),
     path("comment/<int:pk>/<str:action>/moderate/", views.moderate_comment, name="moderate_comment"),
 
+    # ---------- Votos de comentarios ----------
+    path("comment/<int:pk>/vote/<str:vote_type>/", views.vote_comment, name="vote_comment"),
+
     # --------- Perfiles ----------
     path("perfil/", views.profile_detail, name="profile"),  # perfil propio
     path("perfil/editar/", views.profile_edit, name="profile_edit"),
@@ -48,5 +51,14 @@ urlpatterns = [
     path("notifications/disable/<int:user_id>/", views.notification_disable_user, name="notification_disable_user"),
     path("notifications/enable/<int:user_id>/", views.notification_enable_user, name="notification_enable_user"),
     path("notifications/mark-read/", views.mark_all_notifications_read, name="mark_all_notifications_read"),
+
+        # --------- Comentarios de respuestas (opcional AJAX/formulario) ----------
+    # Permite enviar respuestas a comentarios desde un formulario dedicado
+    path("post/<slug:slug>/comentar/respuesta/", views.add_comment, name="add_comment_reply"),
+
+    # --------- Reseñas de respuestas (opcional) ----------
+    # Permite enviar respuestas a reseñas desde un formulario dedicado
+    path("post/<slug:slug>/review/respuesta/", views.add_review, name="add_review_reply"),
+
 
 ]

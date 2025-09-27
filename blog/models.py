@@ -10,6 +10,7 @@ from taggit.managers import TaggableManager
 # ----------------------------
 # Perfil de usuario
 # ----------------------------
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
@@ -44,6 +45,7 @@ class Profile(models.Model):
 # ----------------------------
 # Post (noticia o rumor)
 # ----------------------------
+
 class Post(models.Model):
     STATUS_CHOICES = (
         ('draft', 'Borrador'),
@@ -104,6 +106,7 @@ class Post(models.Model):
 # ----------------------------
 # Comentarios (moderados por autor del post)
 # ----------------------------
+
 class Comment(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pendiente"),
@@ -129,16 +132,48 @@ class Comment(models.Model):
         related_name="replies"
     )
 
+    # 🔹 Nuevo: moderador puede fijar comentarios
+    pinned = models.BooleanField(default=False)
+
     class Meta:
         ordering = ["-created"]
 
     def __str__(self):
         return f"Comentario de {self.author} en {self.post}"
 
+    @property
+    def score(self):
+        upvotes = self.votes.filter(value=1).count()
+        downvotes = self.votes.filter(value=-1).count()
+        return upvotes - downvotes
+
+
+# ----------------------------
+# Votos en comentarios
+# ----------------------------
+
+class CommentVote(models.Model):
+    VOTE_CHOICES = (
+        (1, 'Upvote'),
+        (-1, 'Downvote'),
+        (0, 'Neutral'),
+    )
+
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="votes")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comment_votes")
+    value = models.SmallIntegerField(choices=VOTE_CHOICES, default=0)
+
+    class Meta:
+        unique_together = ("comment", "user")
+
+    def __str__(self):
+        return f"{self.user.username} votó {self.value} en comentario {self.comment.id}"
+
 
 # ----------------------------
 # Reseñas (con rating y moderación)
 # ----------------------------
+
 class Review(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pendiente"),
@@ -176,6 +211,7 @@ class Review(models.Model):
 # ----------------------------
 # Votos en reseñas (like / dislike)
 # ----------------------------
+
 class ReviewVote(models.Model):
     VOTE_CHOICES = (
         ('like', '👍'),
@@ -196,6 +232,7 @@ class ReviewVote(models.Model):
 # ----------------------------
 # Bloqueo de notificaciones entre usuarios
 # ----------------------------
+
 class NotificationBlock(models.Model):
     blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_notifications")
     blocked_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="muted_by")
@@ -211,6 +248,7 @@ class NotificationBlock(models.Model):
 # ----------------------------
 # Bloqueo de usuarios en posts
 # ----------------------------
+
 class PostBlock(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="blocks")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_in_posts")
@@ -226,6 +264,7 @@ class PostBlock(models.Model):
 # ----------------------------
 # Notificaciones
 # ----------------------------
+
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")  # El que recibe
     actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_notifications")  # El que actúa
