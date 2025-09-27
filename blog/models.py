@@ -147,6 +147,14 @@ class Comment(models.Model):
         downvotes = self.votes.filter(value=-1).count()
         return upvotes - downvotes
 
+    @property
+    def likes_count(self):
+        return self.votes.filter(value=1).count()
+
+    @property
+    def dislikes_count(self):
+        return self.votes.filter(value=-1).count()
+
 
 # ----------------------------
 # Votos en comentarios
@@ -201,11 +209,11 @@ class Review(models.Model):
 
     @property
     def likes_count(self):
-        return self.votes.filter(value=1).count()
+        return self.votes.filter(vote="like").count()
 
     @property
     def dislikes_count(self):
-        return self.votes.filter(value=-1).count()
+        return self.votes.filter(vote="dislike").count()
 
 
 # ----------------------------
