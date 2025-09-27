@@ -61,8 +61,8 @@
     /* Campanita 🔔 */
     .notif-bell {
       position: absolute;
-      right: -425px;    /* 🔥 mueve a la derecha */
-      top: 1px;      /* 🔥 ajusta la altura */
+      right: -425px;    /* posición para escritorio grande */
+      top: 1px;
       font-size: 2rem;
       color: #ff3c00 !important;
       transition: transform 0.2s, text-shadow 0.2s;
@@ -234,13 +234,37 @@
     }
     .dropdown-menu .dropdown-item:hover { background: #2a2a2a !important; color: #fff !important; }
 
-    /* Ajustar el dropdown de notificaciones para que quede alineado a la campana */
-#notifDropdown + .dropdown-menu {
-  left: auto !important;   /* ignora la alineación por defecto */
-  right: -425px !important; /* mismo valor que la campana */
-  top: 45px !important;     /* baja el menú justo debajo de la campana */
-}
+    /* Alinear dropdown con la campana */
+    #notifDropdown + .dropdown-menu {
+      left: auto !important;
+      right: -425px !important;
+      top: 45px !important;
+    }
 
+    /* 🔹 Ajustes responsivos */
+    @media (max-width: 1400px) {
+      .notif-bell { right: -200px; top: 2px; }
+      #notifDropdown + .dropdown-menu { right: -200px !important; }
+    }
+    @media (max-width: 992px) {
+      .notif-bell { position: relative; right: 0; margin-left: 15px; }
+      #notifDropdown + .dropdown-menu { right: 0 !important; left: auto !important; }
+    }
+    @media (max-width: 576px) {
+      .notif-bell {
+        position: relative;
+        right: auto;
+        top: auto;
+        margin-left: auto;
+        margin-right: auto;
+        font-size: 1.6rem;
+      }
+      .notif-dropdown {
+        min-width: 95vw;
+        left: 2.5vw !important;
+        right: auto !important;
+      }
+    }
   </style>
 </head>
 <body>
