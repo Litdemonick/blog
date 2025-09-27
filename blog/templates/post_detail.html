@@ -118,16 +118,16 @@
               <small>(Inicia sesión para votar)</small>
             {% endif %}
           </div>
-          
+
           <!-- Botón Responder -->
           {% if user.is_authenticated %}
-            <button type="button"
-                    class="reply-toggle btn-reply d-block mt-2"
-                    data-review="{{ r.id }}"
-                    data-username="{{ r.user.username }}">
-              Responder
-            </button>
-          {% endif %}
+              <button type="button"
+                      class="reply-toggle btn-reply d-block mt-2"
+                      data-review="{{ c.id }}"
+                      data-username="{{ c.author.username }}">
+                Responder
+              </button>
+            {% endif %}
 
 
          <!-- Moderación -->
@@ -219,8 +219,8 @@
         <p>{{ c.text }}</p>
         <small>Por <a href="{% url 'blog:profile_detail' c.author.username %}">{{ c.author.username }}</a> - {{ c.created|date:"d/m/Y g:i A" }}</small>
 
-        <!-- Likes / Dislikes comentario -->
-        <div class="mt-1 d-flex align-items-center gap-2">
+              <!-- Likes / Dislikes comentario -->
+        <div class="mt-1 mb-2 d-flex align-items-center gap-2">
           {% if user.is_authenticated %}
             <a href="{% url 'blog:vote_comment' c.id 'up' %}" class="btn btn-sm btn-outline-success">
               👍 {{ c.likes_count }}
