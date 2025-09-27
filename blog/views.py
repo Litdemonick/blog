@@ -20,6 +20,12 @@ from .models import Post, Comment, Review, ReviewVote, PostBlock
 from .forms import SignUpForm, PostForm, ReviewForm, ProfileForm
 
 
+from .models import (
+    Post, Comment, Review, ReviewVote,
+    PostBlock, Notification, NotificationBlock
+)
+
+
 # --------- Perfil ----------
 def profile_detail(request, username=None):
     if username:
@@ -132,7 +138,7 @@ class PostDetailView(DetailView):
 
 
 def procesar_menciones(comentario, actor, post):
-    """Detecta @username en el texto del comentario y crea notificaciones"""
+    """Detecta @username en el texto del comentario y crea notificaciones (si no está bloqueado)."""
     patron = r'@(\w+)'  # Busca palabras después de @
     usernames = re.findall(patron, comentario.text)
 
@@ -140,15 +146,18 @@ def procesar_menciones(comentario, actor, post):
         try:
             mencionado = User.objects.get(username=uname)
             if mencionado != actor:  # no notificarse a sí mismo
-                Notification.objects.create(
-                    user=mencionado,
-                    actor=actor,
-                    verb="te mencionó en un comentario",
-                    target_post=post,
-                    target_comment=comentario
-                )
+                # ⚡ Evitar si el usuario bloqueó al actor
+                if not NotificationBlock.objects.filter(blocker=mencionado, blocked_user=actor).exists():
+                    Notification.objects.create(
+                        user=mencionado,
+                        actor=actor,
+                        verb="te mencionó en un comentario",
+                        target_post=post,
+                        target_comment=comentario
+                    )
         except User.DoesNotExist:
             continue  # ignorar usuarios inexistentes
+
 
 
 # --------- Añadir reseña ----------
@@ -176,14 +185,15 @@ def add_review(request, slug):
                     comment=comment,
                     status="visible"  # respuestas siempre visibles
                 )
-                # Notificar al autor de la reseña original
+                # ⚡ Notificar al autor de la reseña original si no lo bloqueó
                 if parent.user != request.user:
-                    Notification.objects.create(
-                        user=parent.user,
-                        actor=request.user,
-                        verb="respondió a tu reseña",
-                        target_post=post,
-                    )
+                    if not NotificationBlock.objects.filter(blocker=parent.user, blocked_user=request.user).exists():
+                        Notification.objects.create(
+                            user=parent.user,
+                            actor=request.user,
+                            verb="respondió a tu reseña",
+                            target_post=post,
+                        )
                 messages.success(request, "Respuesta enviada correctamente.")
                 return redirect(post.get_absolute_url())
 
@@ -208,6 +218,7 @@ def add_review(request, slug):
 
 
 
+
 def post_by_platform(request, platform_slug):
     posts = Post.objects.filter(platform=platform_slug)
     return render(request, "post_list.html", {
@@ -228,7 +239,7 @@ def add_comment(request, slug):
 
     if request.method == "POST":
         text = request.POST.get("text")
-        parent_id = request.POST.get("parent_id")  # ✅ capturamos el padre
+        parent_id = request.POST.get("parent_id")
 
         if text:
             parent = None
@@ -239,19 +250,20 @@ def add_comment(request, slug):
                 post=post,
                 author=request.user,
                 text=text,
-                parent=parent,   # ✅ guardamos el padre aquí
+                parent=parent,   # ✅ guardamos el padre si existe
                 status="pending"
             )
 
-            # ✅ Notificar al autor del comentario padre
+            # ⚡ Notificar al autor del comentario padre (si no bloqueó al actor)
             if parent and parent.author and parent.author != request.user:
-                Notification.objects.create(
-                    user=parent.author,
-                    actor=request.user,
-                    verb="respondió a tu comentario",
-                    target_post=post,
-                    target_comment=comentario
-                )
+                if not NotificationBlock.objects.filter(blocker=parent.author, blocked_user=request.user).exists():
+                    Notification.objects.create(
+                        user=parent.author,
+                        actor=request.user,
+                        verb="respondió a tu comentario",
+                        target_post=post,
+                        target_comment=comentario
+                    )
 
             # ✅ Procesar menciones con @usuario
             procesar_menciones(comentario, request.user, post)
@@ -265,6 +277,8 @@ def add_comment(request, slug):
 def notification_list(request):
     notifications = request.user.notifications.all().order_by("-created_at")
     return render(request, "notifications/list.html", {"notifications": notifications})
+
+
 
 
 @login_required
@@ -281,6 +295,25 @@ class AuthorRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         obj = self.get_object()
         return obj.author == self.request.user
+    
+
+
+
+
+@login_required
+def notification_disable_user(request, user_id):
+    actor = get_object_or_404(User, pk=user_id)
+    NotificationBlock.objects.get_or_create(blocker=request.user, blocked_user=actor)
+    messages.info(request, f"Has desactivado las notificaciones de {actor.username}.")
+    return redirect("notification_list")
+
+@login_required
+def notification_enable_user(request, user_id):
+    actor = get_object_or_404(User, pk=user_id)
+    NotificationBlock.objects.filter(blocker=request.user, blocked_user=actor).delete()
+    messages.success(request, f"Has activado nuevamente las notificaciones de {actor.username}.")
+    return redirect("notification_list")
+
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
