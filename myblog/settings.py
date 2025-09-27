@@ -6,7 +6,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Seguridad / Debug ---
 SECRET_KEY = 'dev-secret-key-cambia-esto-en-produccion'
-DEBUG = True
+
+# ⚡ DEBUG se controla con variable de entorno (en Railway pon DEBUG=False)
+DEBUG = os.environ.get("DEBUG", "True") == "True"
+
 # Redirigir a tu ruta personalizada de login
 LOGIN_URL = '/login/'
 
@@ -46,7 +49,7 @@ INSTALLED_APPS = [
 # --- Middleware (orden importante) ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ Whitenoise para servir estáticos en prod
     'django.contrib.sessions.middleware.SessionMiddleware',   # antes que Auth
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,7 +76,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'blog.context_processors.global_tags',
 
-                   # 🔥 nuestro processor
+                # 🔥 nuestros processors
                 "blog.context_processors.unread_notifications",
                 "blog.context_processors.global_tags",
             ],
@@ -107,6 +110,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'   # para collectstatic en prod
 STATICFILES_DIRS = [BASE_DIR / "static"] # ✅ aquí cargas tus íconos (ej: static/img/pc.png)
+
+# ⚡ Importante para producción con Whitenoise
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'          # asegúrate que exista: media/
