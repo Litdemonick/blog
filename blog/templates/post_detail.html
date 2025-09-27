@@ -177,10 +177,10 @@
                     <!-- Likes / Dislikes respuesta -->
                     <div class="mt-1 d-flex align-items-center gap-2">
                       {% if user.is_authenticated %}
-                        <a href="{% url 'blog:vote_comment' reply.id 'up' %}" class="btn btn-sm btn-outline-success">
+                        <a href="{% url 'blog:vote_review' reply.id 'like' %}" class="btn btn-sm btn-outline-success">
                           👍 {{ reply.likes_count }}
                         </a>
-                        <a href="{% url 'blog:vote_comment' reply.id 'down' %}" class="btn btn-sm btn-outline-danger">
+                        <a href="{% url 'blog:vote_review' reply.id 'dislike' %}" class="btn btn-sm btn-outline-danger">
                           👎 {{ reply.dislikes_count }}
                         </a>
                       {% else %}
