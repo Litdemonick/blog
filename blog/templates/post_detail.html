@@ -105,7 +105,7 @@
             – {{ r.created|date:"d/m/Y g:i A" }}
           </small>
 
-          <!-- Score y botones de voto -->
+          <!-- Likes / Dislikes -->
           <div class="mt-2 d-flex align-items-center gap-2">
             {% if user.is_authenticated %}
               <a href="{% url 'blog:vote_review' r.id 'like' %}" class="btn btn-sm btn-outline-success">
@@ -118,8 +118,6 @@
               <small>(Inicia sesión para votar)</small>
             {% endif %}
           </div>
-
-
 
           <!-- Botón Responder -->
           {% if user.is_authenticated %}
@@ -176,14 +174,14 @@
                       – {{ reply.created|date:"d/m/Y g:i A" }}
                     </small>
 
-                    <!-- Score y votos respuesta -->
+                    <!-- Likes / Dislikes respuesta -->
                     <div class="mt-1 d-flex align-items-center gap-2">
                       {% if user.is_authenticated %}
-                        <a href="{% url 'blog:vote_comment' c.id 'up' %}" class="btn btn-sm btn-outline-success">
-                          👍 {{ c.likes_count }}
+                        <a href="{% url 'blog:vote_comment' reply.id 'up' %}" class="btn btn-sm btn-outline-success">
+                          👍 {{ reply.likes_count }}
                         </a>
-                        <a href="{% url 'blog:vote_comment' c.id 'down' %}" class="btn btn-sm btn-outline-danger">
-                          👎 {{ c.dislikes_count }}
+                        <a href="{% url 'blog:vote_comment' reply.id 'down' %}" class="btn btn-sm btn-outline-danger">
+                          👎 {{ reply.dislikes_count }}
                         </a>
                       {% else %}
                         <small>(Inicia sesión para votar)</small>
@@ -220,14 +218,14 @@
         <p>{{ c.text }}</p>
         <small>Por <a href="{% url 'blog:profile_detail' c.author.username %}">{{ c.author.username }}</a> - {{ c.created|date:"d/m/Y g:i A" }}</small>
 
-        <!-- Score y botones de voto -->
+        <!-- Likes / Dislikes comentario -->
         <div class="mt-1 d-flex align-items-center gap-2">
           {% if user.is_authenticated %}
             <a href="{% url 'blog:vote_comment' c.id 'up' %}" class="btn btn-sm btn-outline-success">
-              👍 {{ c.votes.filter(value=1).count }}
+              👍 {{ c.likes_count }}
             </a>
             <a href="{% url 'blog:vote_comment' c.id 'down' %}" class="btn btn-sm btn-outline-danger">
-              👎 {{ c.votes.filter(value=-1).count }}
+              👎 {{ c.dislikes_count }}
             </a>
           {% else %}
             <small>(Inicia sesión para votar)</small>
