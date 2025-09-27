@@ -172,7 +172,19 @@ class Review(models.Model):
     def dislikes_count(self):
         return self.votes.filter(vote="dislike").count()
 
-    
+
+class NotificationBlock(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_notifications")
+    blocked_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="muted_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("blocker", "blocked_user")
+
+    def __str__(self):
+        return f"{self.blocker.username} bloqueó notificaciones de {self.blocked_user.username}"
+
+
 class PostBlock(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="blocks")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_in_posts")
