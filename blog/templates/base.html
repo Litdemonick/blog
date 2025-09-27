@@ -341,7 +341,7 @@
                       {% if n.target_post %}
                         <a href="{{ n.target_post.get_absolute_url }}" class="notif-post">{{ n.target_post.title }}</a>
                       {% endif %}
-                      <div class="notif-time">{{ n.created_at|date:"d/m/Y H:i" }}</div>
+                      <div class="notif-time">{{ n.created_at|date:"d/m/Y g:i A" }}</div>
                     </div>
                     <div class="dropdown notif-options">
                       <a href="#" class="text-muted" id="notifOptions{{ n.id }}" data-bs-toggle="dropdown">⋮</a>
