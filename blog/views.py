@@ -169,7 +169,6 @@ def procesar_menciones(comentario, actor, post):
 
 
 # --------- Añadir reseña ----------
-# --------- Añadir reseña ----------
 @login_required
 def add_review(request, slug):
     post = get_object_or_404(Post, slug=slug, status='published')
@@ -204,18 +203,29 @@ def add_review(request, slug):
 
         # Caso: reseña principal
         if rating:
-            Review.objects.create(
+            review = Review.objects.create(   # ✅ guardamos en variable
                 post=post,
                 user=request.user,
                 rating=rating,
                 comment=comment,
                 status="visible"   # ✅ directo visible
             )
+            # ⚡ Notificar al autor del post si no es el mismo
+            if post.author != request.user:
+                if not NotificationBlock.objects.filter(blocker=post.author, blocked_user=request.user).exists():
+                    Notification.objects.create(
+                        user=post.author,
+                        actor=request.user,
+                        verb="dejó una reseña en tu publicación",
+                        target_post=post,
+                        target_review=review
+                    )
             messages.success(request, "¡Tu reseña fue publicada!")
         else:
             messages.error(request, "Debes dar una calificación para publicar una reseña.")
 
     return redirect(post.get_absolute_url())
+
 
 
 
