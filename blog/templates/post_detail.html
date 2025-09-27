@@ -118,16 +118,17 @@
               <small>(Inicia sesión para votar)</small>
             {% endif %}
           </div>
-
+          
           <!-- Botón Responder -->
           {% if user.is_authenticated %}
             <button type="button"
-                    class="reply-toggle btn-reply mt-2"
+                    class="reply-toggle btn-reply d-block mt-2"
                     data-review="{{ r.id }}"
                     data-username="{{ r.user.username }}">
               Responder
             </button>
           {% endif %}
+
 
          <!-- Moderación -->
             {% if is_owner %}
