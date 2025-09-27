@@ -283,51 +283,51 @@
         <input class="form-control" type="search" name="q" placeholder="Buscar...">
       </form>
 
-      <!-- 🔔 Notificaciones -->
-      <div class="dropdown">
-        <a href="#" class="nav-link position-relative notif-bell" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-          🔔
-          {% if unread_count > 0 %}
-            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
-              {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
-            </span>
-          {% endif %}
-        </a>
+     <!-- 🔔 Notificaciones -->
+<div class="dropdown">
+  <a href="#" class="nav-link position-relative notif-bell" id="notifDropdown"
+     data-bs-toggle="dropdown" aria-expanded="false">
+    🔔
+    {% if user.is_authenticated and unread_count > 0 %}
+      <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+        {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
+      </span>
+    {% endif %}
+  </a>
 
-        <ul class="dropdown-menu dropdown-menu-end p-2 notif-dropdown" aria-labelledby="notifDropdown">
-          {% if request.user.is_authenticated %}
-            {% for n in request.user.notifications.all|slice:":8" %}
-              <li class="notif-item {% if not n.is_read %}unread{% endif %}">
-                <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" class="notif-avatar">
-                <div class="notif-content flex-grow-1">
-                  <a href="{% url 'blog:profile_detail' n.actor.username %}" class="notif-user">{{ n.actor.username }}</a>
-                  {{ n.verb }}
-                  {% if n.target_post %}
-                    <a href="{{ n.target_post.get_absolute_url }}" class="notif-post">{{ n.target_post.title }}</a>
-                  {% endif %}
-                  <div class="notif-time">{{ n.created_at|date:"d/m/Y H:i" }}</div>
-                </div>
-                <div class="dropdown notif-options">
-                  <a href="#" class="text-muted" id="notifOptions{{ n.id }}" data-bs-toggle="dropdown">⋮</a>
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifOptions{{ n.id }}">
-                    <li><a class="dropdown-item" href="{% url 'blog:notification_mark_read' n.id %}">✅ Marcar como leída</a></li>
-                    <li><a class="dropdown-item" href="{% url 'blog:notification_disable_user' n.actor.id %}">🚫 Ocultar de {{ n.actor.username }}</a></li>
-                    <li><a class="dropdown-item text-danger" href="{% url 'blog:notification_disable_user' n.actor.id %}">❌ Bloquear notificaciones</a></li>
-                  </ul>
-                </div>
-              </li>
-              <hr class="m-0">
-            {% empty %}
-              <li class="text-muted text-center p-2">No tienes notificaciones.</li>
-            {% endfor %}
-          {% else %}
-            <li class="text-muted text-center p-2">Inicia sesión para ver notificaciones.</li>
-          {% endif %}
-        </ul>
-      </div>
-    </div>
-  </div>
-</nav>
+  <ul class="dropdown-menu dropdown-menu-end p-2 notif-dropdown" aria-labelledby="notifDropdown">
+    {% if request.user.is_authenticated %}
+      {% for n in request.user.notifications.all|slice:":8" %}
+        <li class="notif-item {% if not n.is_read %}unread{% endif %}">
+          <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+               class="notif-avatar">
+          <div class="notif-content flex-grow-1">
+            <a href="{% url 'blog:profile_detail' n.actor.username %}" class="notif-user">{{ n.actor.username }}</a>
+            {{ n.verb }}
+            {% if n.target_post %}
+              <a href="{{ n.target_post.get_absolute_url }}" class="notif-post">{{ n.target_post.title }}</a>
+            {% endif %}
+            <div class="notif-time">{{ n.created_at|date:"d/m/Y H:i" }}</div>
+          </div>
+          <div class="dropdown notif-options">
+            <a href="#" class="text-muted" id="notifOptions{{ n.id }}" data-bs-toggle="dropdown">⋮</a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifOptions{{ n.id }}">
+              <li><a class="dropdown-item" href="{% url 'blog:notification_mark_read' n.id %}">✅ Marcar como leída</a></li>
+              <li><a class="dropdown-item" href="{% url 'blog:notification_disable_user' n.actor.id %}">🚫 Ocultar de {{ n.actor.username }}</a></li>
+              <li><a class="dropdown-item text-danger" href="{% url 'blog:notification_disable_user' n.actor.id %}">❌ Bloquear notificaciones</a></li>
+            </ul>
+          </div>
+        </li>
+        <hr class="m-0">
+      {% empty %}
+        <li class="text-muted text-center p-2">No tienes notificaciones.</li>
+      {% endfor %}
+    {% else %}
+      <li class="text-muted text-center p-2">Inicia sesión para ver notificaciones.</li>
+    {% endif %}
+  </ul>
+</div>
+
 
 
 <div class="tags-bar text-center">
