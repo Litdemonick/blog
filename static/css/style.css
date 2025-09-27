@@ -239,3 +239,45 @@
   color: #fff !important;
 }
 
+/* ===============================
+   📱 Responsive de campanita 🔔
+   =============================== */
+
+/* Escritorio ancho */
+.notif-bell {
+  position: absolute;
+  right: -425px;  /* tu posición fija */
+  top: 1px;
+  font-size: 2rem;
+  color: #ff3c00 !important;
+  transition: transform 0.2s, text-shadow 0.2s;
+}
+
+/* Hover */
+.notif-bell:hover {
+  transform: scale(1.2);
+  text-shadow: 0 0 10px rgba(255,60,0,0.8);
+}
+
+/* Laptops medianas */
+@media (max-width: 1400px) {
+  .notif-bell {
+    right: -250px;
+  }
+}
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .notif-bell {
+    right: -120px;
+  }
+}
+
+/* Celulares */
+@media (max-width: 768px) {
+  .notif-bell {
+    right: -40px;
+    top: 5px;
+    font-size: 1.6rem;
+  }
+}
