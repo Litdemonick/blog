@@ -135,6 +135,7 @@ class Comment(models.Model):
     def __str__(self):
         return f"Comentario de {self.author} en {self.post}"
 
+
 # ----------------------------
 # Reseñas (con rating y moderación)
 # ----------------------------
@@ -148,11 +149,11 @@ class Review(models.Model):
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
-    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies")  # 🔹 Nuevo campo
+    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
     rating = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        null=True, blank=True  # 🔹 Puede ser vacío si es solo respuesta
-    )
+        null=True, blank=True
+    )  # ⭐ Puede ser vacío si es solo respuesta
     comment = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created = models.DateTimeField(auto_now_add=True)
@@ -163,7 +164,6 @@ class Review(models.Model):
     def __str__(self):
         return f"{self.user} – {self.comment[:30]}"
 
-
     @property
     def likes_count(self):
         return self.votes.filter(vote="like").count()
@@ -171,31 +171,6 @@ class Review(models.Model):
     @property
     def dislikes_count(self):
         return self.votes.filter(vote="dislike").count()
-
-
-class NotificationBlock(models.Model):
-    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_notifications")
-    blocked_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="muted_by")
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("blocker", "blocked_user")
-
-    def __str__(self):
-        return f"{self.blocker.username} bloqueó notificaciones de {self.blocked_user.username}"
-
-
-class PostBlock(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="blocks")
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_in_posts")
-    created = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("post", "user")
-
-    def __str__(self):
-        return f"{self.user} bloqueado en {self.post}"
-
 
 
 # ----------------------------
@@ -219,22 +194,47 @@ class ReviewVote(models.Model):
 
 
 # ----------------------------
-# Notificaciones por menciones
+# Bloqueo de notificaciones entre usuarios
+# ----------------------------
+class NotificationBlock(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_notifications")
+    blocked_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="muted_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("blocker", "blocked_user")
+
+    def __str__(self):
+        return f"{self.blocker.username} bloqueó notificaciones de {self.blocked_user.username}"
+
+
+# ----------------------------
+# Bloqueo de usuarios en posts
+# ----------------------------
+class PostBlock(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="blocks")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_in_posts")
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("post", "user")
+
+    def __str__(self):
+        return f"{self.user} bloqueado en {self.post}"
+
+
+# ----------------------------
+# Notificaciones
 # ----------------------------
 class Notification(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="notifications"
-    )  # El que recibe la notificación
-    actor = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="sent_notifications"
-    )  # El que mencionó
-    verb = models.CharField(max_length=255)  # Ej: "te mencionó en un comentario"
-    target_post = models.ForeignKey(
-        Post, on_delete=models.CASCADE, null=True, blank=True
-    )
-    target_comment = models.ForeignKey(
-        Comment, on_delete=models.CASCADE, null=True, blank=True
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")  # El que recibe
+    actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_notifications")  # El que actúa
+    verb = models.CharField(max_length=255)  # Ej: "comentó tu post"
+
+    target_post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
+    target_review = models.ForeignKey(Review, on_delete=models.CASCADE, null=True, blank=True)
+    target_comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
 
@@ -245,10 +245,11 @@ class Notification(models.Model):
         return f"{self.actor} {self.verb} → {self.user}"
 
     def get_absolute_url(self):
-        """Redirige al comentario si existe, sino al post."""
+        """Redirige según el target disponible."""
         if self.target_comment:
             return self.target_comment.post.get_absolute_url() + f"#comment-{self.target_comment.id}"
+        elif self.target_review:
+            return self.target_review.post.get_absolute_url() + f"#review-{self.target_review.id}"
         elif self.target_post:
             return self.target_post.get_absolute_url()
         return "#"
-

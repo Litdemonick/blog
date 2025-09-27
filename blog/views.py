@@ -11,6 +11,8 @@ from django.http import HttpResponseForbidden
 from .models import Comment, PostBlock
 from taggit.models import Tag
 from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import Post
 from .models import Post
@@ -25,6 +27,13 @@ from .models import (
     PostBlock, Notification, NotificationBlock
 )
 
+
+@login_required
+def mark_all_notifications_read(request):
+    if request.method == "POST":
+        request.user.notifications.filter(is_read=False).update(is_read=True)
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "error"}, status=400)
 
 # --------- Perfil ----------
 def profile_detail(request, username=None):
@@ -115,23 +124,22 @@ class PostDetailView(DetailView):
         post = self.object
         user = self.request.user
 
-        # 🔹 Reseñas
+        # 🔹 Reseñas (solo principales = sin parent)
         if user.is_authenticated and (user == post.author or user.is_staff):
-            ctx["reviews"] = post.reviews.all()  # dueño/admin ve todas
+            ctx["reviews"] = post.reviews.filter(parent__isnull=True)
             ctx["is_owner"] = True
         else:
-            ctx["reviews"] = post.reviews.filter(status="visible")  # otros solo las visibles
+            ctx["reviews"] = post.reviews.filter(parent__isnull=True, status="visible")
             ctx["is_owner"] = False
 
-        # 🔹 Comentarios
+        # 🔹 Comentarios (si también quieres manejarlos)
         if user.is_authenticated and (user == post.author or user.is_staff):
-            ctx["comments"] = post.comments.all()
+            ctx["comments"] = post.comments.filter(parent__isnull=True)
         else:
-            ctx["comments"] = post.comments.filter(status="visible")
+            ctx["comments"] = post.comments.filter(parent__isnull=True, status="visible")
 
         # 🔹 Formularios
         ctx["review_form"] = ReviewForm()
-        # si ya tienes un CommentForm, lo añades aquí:
         # ctx["comment_form"] = CommentForm()
 
         return ctx
@@ -165,16 +173,12 @@ def procesar_menciones(comentario, actor, post):
 def add_review(request, slug):
     post = get_object_or_404(Post, slug=slug, status='published')
 
-    if PostBlock.objects.filter(post=post, user=request.user).exists():
-        messages.error(request, "Has sido bloqueado y no puedes dejar reseñas en este post.")
-        return redirect(post.get_absolute_url())
-
     if request.method == "POST":
         parent_id = request.POST.get("parent_id")
-        comment = request.POST.get("comment", "")
-        rating = request.POST.get("rating")  # rating puede venir vacío si es respuesta
+        comment = request.POST.get("comment", "").strip()
+        rating = request.POST.get("rating")
 
-        # 🔹 Caso: respuesta a otra reseña
+        # Caso: respuesta a una reseña existente
         if parent_id:
             parent = Review.objects.filter(id=parent_id, post=post).first()
             if parent:
@@ -183,38 +187,48 @@ def add_review(request, slug):
                     user=request.user,
                     parent=parent,
                     comment=comment,
-                    status="visible"  # respuestas siempre visibles
+                    status="visible"
                 )
-                # Notificación al autor de la reseña original
+                # Notificación al autor original
                 if parent.user != request.user:
                     Notification.objects.create(
                         user=parent.user,
                         actor=request.user,
                         verb="respondió a tu reseña",
                         target_post=post,
-                        target_comment=reply,
+                        # OJO: como es Review, no Comment
+                        # Usa otro campo o crea uno target_review si quieres diferenciar
                     )
-                messages.success(request, "Respuesta enviada correctamente.")
+                messages.success(request, "Respuesta publicada.")
             return redirect(post.get_absolute_url())
 
-        # 🔹 Caso: reseña nueva (solo si NO hay parent_id)
+        # Caso: reseña principal
         if rating:
-            obj, created = Review.objects.get_or_create(
-                post=post, user=request.user,
-                defaults={'rating': rating, 'comment': comment, 'status': 'pending'}
+            Review.objects.create(
+                post=post,
+                user=request.user,
+                rating=rating,
+                comment=comment,
+                status="pending"  # moderación del autor
             )
-            if not created:
-                obj.rating = rating
-                obj.comment = comment
-                obj.status = 'pending'
-                obj.save()
-                messages.info(request, 'Tu reseña fue actualizada. Espera aprobación del autor.')
-            else:
-                messages.success(request, '¡Tu reseña fue enviada! Espera aprobación del autor.')
+            messages.success(request, "¡Tu reseña fue enviada! Espera aprobación del autor.")
         else:
-            messages.error(request, "Debes dar una calificación si es reseña nueva.")
+            messages.error(request, "Debes dar una calificación para publicar una reseña.")
 
     return redirect(post.get_absolute_url())
+
+
+
+def post_detail(request, slug):
+    post = get_object_or_404(Post, slug=slug, status="published")
+    reviews = post.reviews.filter(parent__isnull=True, status="visible")
+
+    context = {
+        "object": post,
+        "reviews": reviews,
+        "is_owner": request.user == post.author,
+    }
+    return render(request, "blog/post_detail.html", context)
 
 
 
@@ -265,11 +279,24 @@ def add_comment(request, slug):
                         target_post=post,
                         target_comment=comentario
                     )
+            # ⚡ Notificar al autor del post principal (si no es el mismo que comenta)
+            if post.author != request.user:
+                if not NotificationBlock.objects.filter(blocker=post.author, blocked_user=request.user).exists():
+                    Notification.objects.create(
+                        user=post.author,
+                        actor=request.user,
+                        verb="comentó en tu publicación",
+                        target_post=post,
+                        target_comment=comentario
+        )
+
 
             # ✅ Procesar menciones con @usuario
             procesar_menciones(comentario, request.user, post)
 
             messages.info(request, "Comentario enviado. Espera moderación del autor.")
+
+        
 
     return redirect(post.get_absolute_url())
 

@@ -29,6 +29,7 @@
     .navbar {
       background: #1a1a1a !important;
       border-bottom: 2px solid #ff3c00;
+      position: relative; /* 🔥 necesario para posicionar la campana */
     }
     .navbar-brand {
       font-weight: 700;
@@ -55,6 +56,20 @@
     }
     .form-control::placeholder {
       color: #aaa;
+    }
+
+    /* Campanita 🔔 */
+    .notif-bell {
+      position: absolute;
+      right: -425px;    /* 🔥 mueve a la derecha */
+      top: 1px;      /* 🔥 ajusta la altura */
+      font-size: 2rem;
+      color: #ff3c00 !important;
+      transition: transform 0.2s, text-shadow 0.2s;
+    }
+    .notif-bell:hover {
+      transform: scale(1.2);
+      text-shadow: 0 0 10px rgba(255,60,0,0.8);
     }
 
     /* Contenedor principal */
@@ -117,7 +132,7 @@
       box-shadow: 0 0 8px rgba(255, 60, 0, 0.5);
     }
 
-    /* Textarea largo y bonito */
+    /* Textarea largo */
     .content-textarea {
       background: #2a2a2a;
       border: 1px solid #444;
@@ -126,26 +141,18 @@
       padding: 12px;
       font-size: 1rem;
       line-height: 1.6;
-      min-height: 400px;  /* más largo */
-      width: 100%;        /* ocupa todo el ancho */
-      resize: vertical;   /* permite crecer con el mouse */
+      min-height: 400px;
+      width: 100%;
+      resize: vertical;
     }
 
     /* Select multiple bonito */
-    select[multiple] {
-      min-height: 140px;
-    }
-    select[multiple] option {
-      padding: 6px 10px;
-    }
-    select[multiple] option:hover {
-      background: #ff3c00;
-      color: #fff;
-    }
+    select[multiple] { min-height: 140px; }
+    select[multiple] option { padding: 6px 10px; }
+    select[multiple] option:hover { background: #ff3c00; color: #fff; }
 
-    /* Botón de formularios */
-    button,
-    input[type="submit"] {
+    /* Botones */
+    button, input[type="submit"] {
       background: #ff3c00;
       color: #fff;
       border: none;
@@ -155,8 +162,7 @@
       cursor: pointer;
       transition: 0.2s;
     }
-    button:hover,
-    input[type="submit"]:hover {
+    button:hover, input[type="submit"]:hover {
       background: #e63600;
       transform: scale(1.05);
     }
@@ -170,92 +176,86 @@
       font-size: 0.9rem;
       border-top: 1px solid #2a2a2a;
     }
-    footer a {
-      color: #ff3c00;
-      text-decoration: none;
-    }
-    footer a:hover {
-      text-decoration: underline;
-    }
+    footer a { color: #ff3c00; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
 
-    /* 🔥 Colores claros para reseñas y comentarios */
+    /* Comentarios y reseñas */
     .review, .review p, .review small,
-    .comment, .comment p, .comment small {
-      color: #f5f5f5 !important;
-    }
-
+    .comment, .comment p, .comment small { color: #f5f5f5 !important; }
     .review a, .comment a {
-      color: #0dcaf0 !important;   /* celeste */
-      font-weight: 600;
-      text-decoration: none;
+      color: #0dcaf0 !important; font-weight: 600; text-decoration: none;
     }
+    .review a:hover, .comment a:hover { color: #0bbbe6 !important; text-decoration: underline; }
 
-    .review a:hover, .comment a:hover {
-      color: #0bbbe6 !important;
-      text-decoration: underline;
+    /* Íconos de plataformas */
+    .platform-filters { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+    .platform-filters img { width: 40px; height: auto; cursor: pointer; transition: transform 0.2s; }
+    .platform-filters img:hover { transform: scale(1.2); }
+
+    /* Meta posts */
+    .post-meta { color: #bbb !important; font-size: 0.9rem; }
+    .post-meta .username { color: #ff3c00 !important; font-weight: 600; }
+    .rating { display: block; color: #ffc107 !important; font-weight: 700; margin: 5px 0 10px 0; }
+
+    /* 🔔 Notificaciones */
+    .notif-dropdown {
+      background: #1a1a1a !important;
+      border: 1px solid #2a2a2a !important;
+      border-radius: 8px !important;
+      min-width: 380px;
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 6px !important;
     }
+    .notif-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      transition: background 0.2s ease;
+      color: #eee !important;
+    }
+    .notif-item:hover { background: #222 !important; }
+    .notif-item.unread { background: rgba(255, 60, 0, 0.1) !important; font-weight: bold; }
+    .notif-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; }
+    .notif-content { flex-grow: 1; font-size: 0.9rem; line-height: 1.3; }
+    .notif-user { font-weight: 700; color: #ff3c00 !important; margin-right: 5px; text-decoration: none; }
+    .notif-user:hover { text-decoration: underline; color: #ff5722 !important; }
+    .notif-post { color: #ffb300 !important; font-weight: 600; text-decoration: none; }
+    .notif-post:hover { text-decoration: underline; color: #ffc107 !important; }
+    .notif-time { font-size: 0.75rem; color: #999 !important; display: block; margin-top: 4px; }
+    .notif-options { margin-left: auto; color: #aaa !important; cursor: pointer; }
+    .notif-options:hover { color: #fff !important; }
+    .dropdown-menu .dropdown-item {
+      background: transparent !important;
+      color: #ddd !important;
+      font-size: 0.9rem;
+    }
+    .dropdown-menu .dropdown-item:hover { background: #2a2a2a !important; color: #fff !important; }
 
-
-    /* 🔥 Íconos de plataformas */
-.platform-filters {
-  display: flex;
-  justify-content: center;   /* centrados */
-  gap: 15px;                 /* espacio entre ellos */
-  margin: 20px 0;
+    /* Ajustar el dropdown de notificaciones para que quede alineado a la campana */
+#notifDropdown + .dropdown-menu {
+  left: auto !important;   /* ignora la alineación por defecto */
+  right: -425px !important; /* mismo valor que la campana */
+  top: 45px !important;     /* baja el menú justo debajo de la campana */
 }
-
-.platform-filters img {
-  width: 40px;               /* ajusta tamaño */
-  height: auto;              /* mantiene proporción */
-  object-fit: contain;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.platform-filters img:hover {
-  transform: scale(1.2);
-}
-
-
-
-/* 🔥 Meta de los posts */
-.post-meta {
-  color: #bbb !important;       /* gris claro */
-  font-size: 0.9rem;
-}
-
-/* Usuario en naranja gamer */
-.post-meta .username {
-  color: #ff3c00 !important;
-  font-weight: 600;
-}
-
-/* Rating bien visible */
-.rating {
-  display: block;               /* en nueva línea */
-  color: #ffc107 !important;    /* amarillo gamer */
-  font-weight: 700;
-  margin: 5px 0 10px 0;
-}
-
-
 
   </style>
 </head>
 <body>
 
-
-
-
-
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark">
   <div class="container">
     <a class="navbar-brand" href="{% url 'blog:post_list' %}">Noticias & Rumores</a>
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
+      <ul class="navbar-nav ms-auto align-items-center">
         {% if user.is_authenticated %}
           <li class="nav-item"><a class="nav-link" href="{% url 'blog:post_create' %}">Nuevo Post</a></li>
           <li class="nav-item">
@@ -266,13 +266,10 @@
               {{ user.username }}
             </a>
           </li>
-          <!-- 🔥 Logout seguro con POST -->
           <li class="nav-item">
             <form method="post" action="{% url 'blog:logout' %}" style="display:inline;">
               {% csrf_token %}
-              <button type="submit" class="nav-link btn btn-link p-0" style="color:#ccc; text-decoration:none;">
-                Salir
-              </button>
+              <button type="submit" class="nav-link btn btn-link p-0" style="color:#ccc; text-decoration:none;">Salir</button>
             </form>
           </li>
         {% else %}
@@ -280,76 +277,59 @@
           <li class="nav-item"><a class="nav-link" href="{% url 'blog:signup' %}">Crear cuenta</a></li>
         {% endif %}
       </ul>
+
+      <!-- 🔍 Buscador -->
       <form class="d-flex ms-3" method="get" action="{% url 'blog:search' %}">
-        <!-- 🔔 Notificaciones -->
-<div class="dropdown ms-3">
-  <a href="#" class="nav-link position-relative" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-    🔔
-    {% if unread_count > 0 %}
-      <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
-        {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
-      </span>
-    {% endif %}
-  </a>
-
-  <!-- Dropdown de notificaciones -->
-<ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="notifDropdown" 
-    style="min-width: 350px; max-height: 400px; overflow-y: auto;">
-  {% if request.user.is_authenticated %}
-    {% for n in request.user.notifications.all|slice:":5" %}
-      <li class="d-flex align-items-start mb-3 {% if not n.is_read %}fw-bold{% endif %}">
-        <!-- Avatar -->
-        <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
-             alt="avatar" class="rounded-circle me-2" width="40" height="40">
-
-        <!-- Contenido -->
-        <div class="flex-grow-1">
-          <a href="{% url 'blog:profile_detail' n.actor.username %}" class="text-decoration-none fw-bold text-light">
-            {{ n.actor.username }}
-          </a>
-          {{ n.verb }} en 
-          <a href="{{ n.target_post.get_absolute_url }}" class="text-warning">
-            {{ n.target_post.title }}
-          </a>
-          <div class="text-muted small">{{ n.created_at|date:"d/m/Y H:i" }}</div>
-        </div>
-
-        <!-- Botón 3 puntitos -->
-        <div class="dropdown">
-          <a href="#" class="text-muted" id="notifOptions{{ n.id }}" data-bs-toggle="dropdown">
-            ⋮
-          </a>
-          <ul class="dropdown-menu" aria-labelledby="notifOptions{{ n.id }}">
-            <li>
-              <a class="dropdown-item" href="{% url 'blog:notification_mark_read' n.id %}">
-                Marcar como leída
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'blog:notification_disable_user' n.actor.id %}">
-                Desactivar notificaciones de {{ n.actor.username }}
-              </a>
-            </li>
-          </ul>
-        </div>
-      </li>
-    {% empty %}
-      <li class="text-muted">No tienes notificaciones.</li>
-    {% endfor %}
-  {% else %}
-    <li class="text-muted">Inicia sesión para ver notificaciones.</li>
-  {% endif %}
-</ul>
-
-</div>
-
         <input class="form-control" type="search" name="q" placeholder="Buscar...">
       </form>
+
+      <!-- 🔔 Notificaciones -->
+      <div class="dropdown">
+        <a href="#" class="nav-link position-relative notif-bell" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          🔔
+          {% if unread_count > 0 %}
+            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">
+              {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
+            </span>
+          {% endif %}
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end p-2 notif-dropdown" aria-labelledby="notifDropdown">
+          {% if request.user.is_authenticated %}
+            {% for n in request.user.notifications.all|slice:":8" %}
+              <li class="notif-item {% if not n.is_read %}unread{% endif %}">
+                <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" class="notif-avatar">
+                <div class="notif-content flex-grow-1">
+                  <a href="{% url 'blog:profile_detail' n.actor.username %}" class="notif-user">{{ n.actor.username }}</a>
+                  {{ n.verb }}
+                  {% if n.target_post %}
+                    <a href="{{ n.target_post.get_absolute_url }}" class="notif-post">{{ n.target_post.title }}</a>
+                  {% endif %}
+                  <div class="notif-time">{{ n.created_at|date:"d/m/Y H:i" }}</div>
+                </div>
+                <div class="dropdown notif-options">
+                  <a href="#" class="text-muted" id="notifOptions{{ n.id }}" data-bs-toggle="dropdown">⋮</a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifOptions{{ n.id }}">
+                    <li><a class="dropdown-item" href="{% url 'blog:notification_mark_read' n.id %}">✅ Marcar como leída</a></li>
+                    <li><a class="dropdown-item" href="{% url 'blog:notification_disable_user' n.actor.id %}">🚫 Ocultar de {{ n.actor.username }}</a></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'blog:notification_disable_user' n.actor.id %}">❌ Bloquear notificaciones</a></li>
+                  </ul>
+                </div>
+              </li>
+              <hr class="m-0">
+            {% empty %}
+              <li class="text-muted text-center p-2">No tienes notificaciones.</li>
+            {% endfor %}
+          {% else %}
+            <li class="text-muted text-center p-2">Inicia sesión para ver notificaciones.</li>
+          {% endif %}
+        </ul>
+      </div>
     </div>
   </div>
 </nav>
 
-<!-- 🔥 Barra de tags -->
+
 <div class="tags-bar text-center">
   {% for tag in all_tags %}
     <a href="{% url 'blog:post_by_tag' tag.slug %}">#{{ tag.name }}</a>
@@ -371,8 +351,6 @@
   </div>
 </footer>
 
-
-
 <!-- 🔥 Script para notificaciones -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -381,10 +359,30 @@ document.addEventListener("DOMContentLoaded", function() {
 
   notifDropdown.addEventListener("click", () => {
     if (badge) {
-      badge.style.display = "none";  // ocultar número cuando se abre
+      fetch("{% url 'blog:mark_all_notifications_read' %}", {
+        method: "POST",
+        headers: { "X-CSRFToken": getCookie("csrftoken") }
+      })
+      .then(res => res.json())
+      .then(data => { if (data.status === "ok") { badge.remove(); } });
     }
   });
 });
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
 </script>
+
 </body>
 </html>

@@ -107,11 +107,12 @@
 
           <!-- Botón Responder -->
           {% if user.is_authenticated %}
-            <a href="#" 
-               class="reply-toggle btn btn-sm btn-outline-primary mt-2"
-               data-review="{{ r.id }}">
+            <button type="button"
+                    class="reply-toggle btn-reply mt-2"
+                    data-review="{{ r.id }}"
+                    data-username="{{ r.user.username }}">
               Responder
-            </a>
+            </button>
           {% endif %}
 
           <!-- Moderación -->
@@ -132,24 +133,13 @@
             </div>
           {% endif %}
 
-          <!-- Formulario inline oculto -->
-          {% if user.is_authenticated %}
-            <form method="post" action="{% url 'blog:add_review' object.slug %}" 
-                  class="reply-form mt-2" id="reply-form-{{ r.id }}" style="display:none;">
-              {% csrf_token %}
-              <input type="hidden" name="parent_id" value="{{ r.id }}">
-              <textarea name="comment" rows="2" class="form-control mb-2"
-                        placeholder="Responde a {{ r.user.username }}..." required></textarea>
-              <button type="submit" class="btn btn-sm btn-success">Enviar</button>
-            </form>
-          {% endif %}
-
           <!-- Botón Ver respuestas -->
           {% if r.replies.count > 0 %}
-            <a href="#" class="toggle-replies d-block mt-2 text-primary small"
-               data-review="{{ r.id }}">
+            <button type="button" 
+                    class="toggle-replies btn-reply mt-2"
+                    data-review="{{ r.id }}">
               Ver {{ r.replies.count }} respuesta{{ r.replies.count|pluralize }}
-            </a>
+            </button>
 
             <div class="replies-list ms-4 mt-2" id="replies-{{ r.id }}" style="display:none;">
               {% for reply in r.replies.all %}
@@ -174,11 +164,12 @@
                     </small>
 
                     {% if user.is_authenticated %}
-                      <a href="#" 
-                         class="reply-toggle btn btn-sm btn-outline-primary ms-2"
-                         data-review="{{ r.id }}">
+                      <button type="button"
+                              class="reply-toggle btn-reply ms-2"
+                              data-review="{{ r.id }}"
+                              data-username="{{ reply.user.username }}">
                         Responder
-                      </a>
+                      </button>
                     {% endif %}
                   </div>
                 </div>
@@ -192,26 +183,43 @@
     {% endfor %}
   </ul>
 
+  <!-- Contenedor global de respuesta estilo YouTube -->
+  <div id="reply-box" class="reply-box" style="display:none; width:100%; margin-top:10px;">
+    <div class="reply-header mb-1">
+      Respondiendo a <span id="reply-username" class="fw-bold text-primary"></span>
+    </div>
+    <form method="post" action="{% url 'blog:add_review' object.slug %}">
+      {% csrf_token %}
+      <input type="hidden" name="parent_id" id="reply-parent-id">
+      <textarea id="reply-textarea" name="comment" rows="3" 
+                class="form-control mb-2"
+                style="width:100%; resize: vertical;"
+                placeholder="Escribe tu respuesta..." required></textarea>
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" id="cancel-reply" class="btn btn-sm btn-secondary">Cancelar</button>
+        <button type="submit" class="btn btn-sm btn-success">Responder</button>
+      </div>
+    </form>
+  </div>
+
   <!-- Script -->
   <script>
   document.addEventListener("DOMContentLoaded", function() {
-    // Toggle formulario de respuesta
-    document.querySelectorAll(".reply-toggle").forEach(btn => {
-      btn.addEventListener("click", function(e) {
-        e.preventDefault();
-        const form = document.getElementById("reply-form-" + this.dataset.review);
-        if (form) {
-          form.style.display = (form.style.display === "none" ? "block" : "none");
-        }
-      });
-    });
+    const replyBox = document.getElementById("reply-box");
+    const replyUsername = document.getElementById("reply-username");
+    const replyTextarea = document.getElementById("reply-textarea");
+    const replyParent = document.getElementById("reply-parent-id");
+    const cancelBtn = document.getElementById("cancel-reply");
 
-    // Toggle Ver respuestas
+    // Toggle respuestas
     document.querySelectorAll(".toggle-replies").forEach(btn => {
       btn.addEventListener("click", function(e) {
         e.preventDefault();
-        const repliesDiv = document.getElementById("replies-" + this.dataset.review);
-        if (repliesDiv.style.display === "none") {
+        const reviewId = this.dataset.review;
+        const repliesDiv = document.getElementById("replies-" + reviewId);
+        if (!repliesDiv) return;
+
+        if (repliesDiv.style.display === "none" || repliesDiv.style.display === "") {
           repliesDiv.style.display = "block";
           this.textContent = "Ocultar respuestas";
         } else {
@@ -221,8 +229,34 @@
         }
       });
     });
+
+    // Responder
+    document.querySelectorAll(".reply-toggle").forEach(btn => {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+
+        const username = this.dataset.username;
+        const reviewId = this.dataset.review;
+
+        replyUsername.textContent = "@" + username;
+        replyParent.value = reviewId;
+
+        const reviewDiv = document.getElementById("review-" + reviewId);
+        reviewDiv.appendChild(replyBox);
+
+        replyBox.style.display = "block";
+        replyTextarea.focus();
+      });
+    });
+
+    // Cancelar
+    cancelBtn.addEventListener("click", function() {
+      replyBox.style.display = "none";
+      replyTextarea.value = "";
+      replyParent.value = "";
+      replyUsername.textContent = "";
+    });
   });
   </script>
-
 </article>
 {% endblock %}
