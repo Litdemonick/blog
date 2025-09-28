@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Notificaciones{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">🔔 Tus notificaciones</h2>
+
+<ul class="list-unstyled">
+  {% for n in notifications %}
+    <li class="border rounded p-3 mb-3 d-flex align-items-start {% if not n.is_read %}bg-light{% endif %}">
+      
+      <!-- Avatar -->
+      <div class="me-3">
+        {% if n.actor.profile.avatar %}
+          <img src="{{ n.actor.profile.avatar.url }}" alt="avatar" class="rounded-circle" width="48" height="48">
+        {% else %}
+          <img src="{% static 'img/default-avatar.png' %}" alt="avatar" class="rounded-circle" width="48" height="48">
+        {% endif %}
+      </div>
+
+      <!-- Contenido -->
+      <div class="flex-grow-1">
+        <p class="mb-1">
+          <a href="{% url 'blog:profile_detail' n.actor.username %}" class="fw-bold text-primary">
+            {{ n.actor.username }}
+          </a> 
+          {{ n.verb }}
+        </p>
+
+        <!-- Post relacionado -->
+        {% if n.target_post %}
+          <p class="mb-1 small">
+            En el post: 
+            <a href="{{ n.target_post.get_absolute_url }}" class="fw-bold">
+              {{ n.target_post.title }}
+            </a>
+          </p>
+        {% endif %}
+
+        <!-- Vista previa del comentario -->
+        {% if n.target_comment %}
+          <blockquote class="small text-muted border-start ps-2">
+            {{ n.target_comment.text|truncatechars:120 }}
+          </blockquote>
+        {% endif %}
+
+        <!-- Fecha -->
+        <small class="text-secondary">
+          {{ n.created_at|date:"d/m/Y g:i A" }}  {# ✅ ahora muestra AM/PM #}
+        </small>
+      </div>
+
+      <!-- Botón de 3 puntitos -->
+      <div class="dropdown ms-2">
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          ⋮
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+            <form method="post" action="{% url 'blog:notification_mark_read' n.id %}">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item">Ocultar esta notificación</button>
+            </form>
+          </li>
+          <li>
+            <form method="post" action="{% url 'notification_disable_user' n.actor.id %}">
+              {% csrf_token %}
+              <button type="submit" class="dropdown-item text-danger">
+                Desactivar notificaciones de {{ n.actor.username }}
+              </button>
+            </form>
+          </li>
+        </ul>
+      </div>
+
+    </li>
+  {% empty %}
+    <p class="text-muted">No tienes notificaciones aún.</p>
+  {% endfor %}
+</ul>
+{% endblock %}

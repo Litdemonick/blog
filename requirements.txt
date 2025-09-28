@@ -1,0 +1,13 @@
+Django>=4.2,<5.0
+django-ckeditor>=6.7.1
+django-js-asset>=2.2.0
+Pillow>=10.0.0
+sqlparse>=0.5.0
+asgiref>=3.7.2
+whitenoise
+gunicorn>=21.2.0
+tzdata>=2023.3
+django-taggit>=5.0.1
+gunicorn
+whitenoise
+

@@ -17,7 +17,7 @@ class SignUpForm(UserCreationForm):
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'cover', 'excerpt', 'content', 'status', 'tags']
+        fields = ['title', 'cover', 'excerpt', 'content', 'status', 'tags',"platform"]
         widgets = {
             # 👉 Aquí el campo tags se hace texto para poder escribir nuevos,
             #    y Django-Taggit reconocerá tags separados por coma.
