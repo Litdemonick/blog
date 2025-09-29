@@ -3,7 +3,6 @@ from django.contrib.auth import views as auth_views
 from . import views_subscriptions
 from . import views_subscriptions as subs
 from . import views
-from .views import PostListView, MisPostsListView
 from .views import ReactionView
 from .feeds import AuthorFeed, TagFeed 
 
@@ -92,7 +91,5 @@ urlpatterns = [
     path("perfil/<str:username>/", views.profile_detail, name="profile_detail"),
 
     path("post/<int:post_id>/toggle-visibility/", views.toggle_visibility, name="toggle_visibility"),
-    path('', PostListView.as_view(), name='post_list'),
-    path('mis-posts/', MisPostsListView.as_view(), name='mis_posts'),
 
 ]

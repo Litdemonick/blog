@@ -297,9 +297,10 @@
           <li class="nav-item"><a class="nav-link" href="{% url 'blog:my_subscriptions' %}">Suscripciones</a></li>
           <li class="nav-item">
             <a class="nav-link d-flex align-items-center" href="{% url 'blog:profile' %}">
-             <img src="{{ user.profile.get_avatar_url }}"
-              alt="avatar" width="28" height="28"
-              class="rounded-circle border border-2 border-light me-2">
+              <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}"
+                  alt="avatar"
+                  width="28" height="28"
+                  class="rounded-circle border border-2 border-light me-2">
               <span class="ms-1">{{ user.username }}</span>
             </a>
           </li>
@@ -330,9 +331,9 @@
                data-bs-toggle="dropdown" aria-expanded="false">
               🔔
               {% if user.is_authenticated and unread_count > 0 %}
-                <span class="badge bg-danger">
-                {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
-              </span>
+                <span class="badge bg-danger">{{ unread_count }}</span>
+                  {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
+          
               {% endif %}
             </a>
 
@@ -340,9 +341,8 @@
               {% if request.user.is_authenticated %}
                   {% for n in notifications %}
                   <li class="notif-item {% if not n.is_read %}unread{% endif %}">
-                    <img src="{{ n.actor.profile.get_avatar_url }}"
-                      class="notif-avatar" alt="Avatar">
-
+                    <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                         class="notif-avatar" alt="Avatar">
                     <div class="notif-content">
                       <a href="{% url 'blog:profile_detail' n.actor.username %}" class="notif-user">{{ n.actor.username }}</a>
                       {{ n.verb }}

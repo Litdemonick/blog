@@ -1,14 +1,11 @@
 from pathlib import Path
 import os
-import dj_database_url   # 👈 para leer DATABASE_URL de Railway
-
 
 # --- Rutas base ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # --- Seguridad / Debug ---
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-cambia-esto-en-produccion")
+SECRET_KEY = 'dev-secret-key-cambia-esto-en-produccion'
 
 # ⚡ DEBUG se controla con variable de entorno (en Railway pon DEBUG=False)
 DEBUG = os.environ.get("DEBUG", "True") == "True"
@@ -38,27 +35,20 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles',   # ✅ solo una vez
 
     # Terceros
-    'ckeditor',
-    'ckeditor_uploader',
-    'taggit',
-    'rest_framework',
-    "widget_tweaks",
+    'ckeditor',              # Editor
+    'ckeditor_uploader',     # Subida de archivos/imagenes desde CKEditor
+    'taggit',                # Tags
 
     # Apps locales
     'blog.apps.BlogConfig',
+    
 
-    # Cloudinary
-    'cloudinary',
-    'cloudinary_storage',
+    'rest_framework',
+    "widget_tweaks",
 ]
-
-# ✅ No pongas CLOUDINARY_STORAGE manual si ya usas CLOUDINARY_URL
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-
-
 
 # --- Middleware (orden importante) ---
 MIDDLEWARE = [
@@ -88,6 +78,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'blog.context_processors.global_tags',
 
                 # 🔥 nuestros processors
                 "blog.context_processors.global_tags",
@@ -98,24 +89,13 @@ TEMPLATES = [
     },
 ]
 
-# --- Base de datos ---
-if os.environ.get("DATABASE_URL"):  
-    # En Railway → usar Postgres
-    DATABASES = {
-        "default": dj_database_url.config(
-            default=os.environ["DATABASE_URL"],
-            conn_max_age=600,
-            ssl_require=True
-        )
+# --- Base de datos (SQLite para desarrollo) ---
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-else:
-    # En local → usar SQLite
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 # --- Validadores de contraseña ---
 AUTH_PASSWORD_VALIDATORS = [
@@ -136,13 +116,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'   # para collectstatic en prod
 STATICFILES_DIRS = [BASE_DIR / "static"] # ✅ aquí cargas tus íconos (ej: static/img/pc.png)
 
-
-
-# 🚀 Servir estáticos tal cual, sin hashes
-STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
-
-
-
+# ⚡ Importante para producción con Whitenoise
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'          # asegúrate que exista: media/
@@ -154,18 +129,6 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'full',
         'height': 300,
         'width': '100%',
-    }
-}
-
-# --- CKEditor5 (config opcional si usas ckeditor5.fields.CKEditor5Field) ---
-CKEDITOR5_CONFIGS = {
-    'default': {
-        'toolbar': [
-            'heading', '|',
-            'bold', 'italic', 'link', 'underline', '|',
-            'bulletedList', 'numberedList', '|',
-            'blockQuote', 'imageUpload'
-        ]
     }
 }
 

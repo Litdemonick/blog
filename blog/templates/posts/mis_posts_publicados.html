@@ -5,9 +5,9 @@
     <h2 class="text-center text-info mb-4">📢 Mis posts publicados</h2>
     <hr class="border-secondary">
 
-    {% if page_obj %}
+    {% if posts %}
         <div class="row">
-            {% for post in page_obj %}
+            {% for post in posts %}
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card bg-dark text-light shadow-sm rounded-3 h-100 post-card"
                         data-url="{% url 'blog:post_detail' post.slug %}"
@@ -61,41 +61,32 @@
             {% endfor %}
         </div>
 
-       <!-- 🔹 Paginación numerada -->
-        {% if is_paginated %}
+       <!-- 🔹 Paginación -->
+        {% if posts.has_other_pages %}
             <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
+                    {% if posts.has_previous %}
                         <li class="page-item">
-                            <a class="page-link bg-dark text-light border-0" href="?page=1">««</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link bg-dark text-light border-0" href="?page={{ page_obj.previous_page_number }}">«</a>
+                            <a class="page-link bg-dark text-light border-0" href="?page={{ posts.previous_page_number }}">
+                                ⬅️
+                            </a>
                         </li>
                     {% endif %}
 
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active">
-                                <span class="page-link bg-danger border-0">{{ num }}</span>
-                            </li>
-                        {% else %}
-                            <li class="page-item">
-                                <a class="page-link bg-dark text-light border-0" href="?page={{ num }}">{{ num }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
+                    <li class="page-item disabled">
+                        <span class="page-link bg-dark text-light border-0">
+                            Página {{ posts.number }} de {{ posts.paginator.num_pages }}
+                        </span>
+                    </li>
 
-                    {% if page_obj.has_next %}
+                    {% if posts.has_next %}
                         <li class="page-item">
-                            <a class="page-link bg-dark text-light border-0" href="?page={{ page_obj.next_page_number }}">»</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link bg-dark text-light border-0" href="?page={{ page_obj.paginator.num_pages }}">»»</a>
+                            <a class="page-link bg-dark text-light border-0" href="?page={{ posts.next_page_number }}">
+                                ➡️
+                            </a>
                         </li>
                     {% endif %}
                 </ul>
-                <p class="text-center text-muted">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</p>
             </nav>
         {% endif %}
     {% else %}
@@ -139,12 +130,7 @@
         color: #fff;
         font-weight: 600;
     }
-    .pagination .active .page-link {
-        background-color: #ff3d00 !important;
-        color: #fff;
-    }
 </style>
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   // 🔹 Hacer que toda la card sea clickeable (menos los botones)
@@ -182,4 +168,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
 {% endblock %}

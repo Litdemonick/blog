@@ -238,24 +238,8 @@ class PostListView(ListView):
             p.reaction_counts = counts_map.get(p.id, {})
 
         return ctx
-    
-
-
-# 🔹 Nueva vista para "Mis Posts publicados"
-class MisPostsListView(ListView):
-    model = Post
-    template_name = "blog/mis_posts.html"   # usa el template que compartiste
-    context_object_name = "posts"
-    paginate_by = 6    # 👈 aquí limitamos a 6
-    ordering = ['-created']
-
-    def get_queryset(self):
-        # si quieres mostrar solo los visibles del usuario autenticado
-        return Post.objects.filter(author=self.request.user, is_visible=True).order_by('-created')
 
 from .models import Subscription  # importa tu modelo de suscripciones
-
-
 
 class PostDetailView(DetailView):
     model = Post

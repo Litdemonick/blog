@@ -7,12 +7,15 @@
     <div class="text-center">
       <h2 class="mb-4 text-gamer">Perfil de {{ profile_user.username }}</h2>
 
-      <img src="{{ profile_user.profile.get_avatar_url }}"
-        width="140" height="140"
-        class="profile-avatar mb-3"
-        alt="Avatar de {{ profile_user.username }}">
-
-    
+      {% if profile_user.profile.avatar %}
+        <img src="{{ profile_user.profile.avatar.url }}" width="140" height="140" 
+             class="profile-avatar mb-3"
+             alt="Avatar de {{ profile_user.username }}">
+      {% else %}
+        <img src="{% static 'img/default-avatar.png' %}" width="140" height="140"
+             class="profile-avatar mb-3"
+             alt="Avatar por defecto">
+      {% endif %}
     </div>
 
     <hr class="border-secondary">

@@ -4,22 +4,17 @@ from django.utils.text import slugify
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from ckeditor_uploader.fields import RichTextUploadingField
-from ckeditor.fields import RichTextField
 from taggit.managers import TaggableManager
 from taggit.models import Tag
 from django.utils import timezone
+from django_ckeditor_5.fields import CKEditor5Field
+from taggit.managers import TaggableManager
 from django.db.models import Q
-
-
 
 
 # ----------------------------
 # Perfil de usuario
 # ----------------------------
-from django.templatetags.static import static
-
-from django.db import models
-from django.contrib.auth.models import User
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -50,21 +45,6 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'Perfil de {self.user.username}'
-
-    @property
-    def get_avatar_url(self):
-        """
-        Devuelve la URL del avatar:
-        - Si existe avatar subido -> usa Cloudinary o MEDIA_URL.
-        - Si no existe o hay error -> usa fallback en Cloudinary (default-avatar).
-        """
-        if self.avatar:
-            try:
-                return self.avatar.url
-            except Exception:
-                pass
-        # 🔹 Fallback Cloudinary
-        return "https://res.cloudinary.com/dnsxdraop/image/upload/v1759167107/default-avatar_hebe3h.png"
 
 
 # ----------------------------
