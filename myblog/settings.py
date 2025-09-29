@@ -38,29 +38,26 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',   # ✅ solo una vez
+    'django.contrib.staticfiles',
 
     # Terceros
-    'ckeditor',              # Editor clásico
-    'ckeditor_uploader',     # Subida de archivos/imagenes desde CKEditor
-    'taggit',                # Tags
+    'ckeditor',
+    'ckeditor_uploader',
+    'taggit',
     'rest_framework',
     "widget_tweaks",
 
     # Apps locales
     'blog.apps.BlogConfig',
+
+    # Cloudinary
     'cloudinary',
     'cloudinary_storage',
 ]
 
-# Configuración de Cloudinary
-CLOUDINARY_STORAGE = {
-    "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
-    "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
-    "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
-}
-
+# ✅ No pongas CLOUDINARY_STORAGE manual si ya usas CLOUDINARY_URL
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+
 
 
 # --- Middleware (orden importante) ---
