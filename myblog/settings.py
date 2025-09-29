@@ -3,7 +3,8 @@ import os
 import dj_database_url   # 👈 para leer DATABASE_URL de Railway
 
 # --- Rutas base ---
-BASE_DIR = Path(_file_).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 # --- Seguridad / Debug ---
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-cambia-esto-en-produccion")
@@ -44,7 +45,9 @@ INSTALLED_APPS = [
     'taggit',                # Tags
     'rest_framework',
     "widget_tweaks",
-    "ckeditor5",             # CKEditor 5 (si usas CKEditor5Field en modelos)
+    'django_ckeditor_5',          # CKEditor 5 (si usas CKEditor5Field en modelos)
+ 
+
 
     # Apps locales
     'blog.apps.BlogConfig',
