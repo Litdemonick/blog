@@ -15,6 +15,7 @@ from django.db.models import Q
 # ----------------------------
 # Perfil de usuario
 # ----------------------------
+from django.templatetags.static import static
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -46,6 +47,11 @@ class Profile(models.Model):
     def __str__(self):
         return f'Perfil de {self.user.username}'
 
+    def get_avatar_url(self):
+        """Devuelve la URL del avatar o el default si no existe."""
+        if self.avatar and hasattr(self.avatar, "url"):
+            return self.avatar.url
+        return static("img/default-avatar.png")
 
 # ----------------------------
 # Post (noticia o rumor)
