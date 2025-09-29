@@ -220,5 +220,3 @@ Puedes reutilizarlo y adaptarlo libremente siempre que cites a los autores origi
 
 ---
 
-👉 Ya lo puedes copiar tal cual como `README.md` en tu repo.  
-¿Quieres que también te genere un **`requirements.txt` base** listo para este proyecto con Django + librerías (ckeditor, taggit, crispy, htmx, etc.) para que lo pegues directo en tu entorno `bloggame`?
