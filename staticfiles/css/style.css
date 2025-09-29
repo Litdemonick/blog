@@ -131,7 +131,7 @@
 }
 
 /* ===============================
-   🔔 Estilo gamer de notificaciones
+   🔔 Estilo gamer de notificaciones - CORREGIDO
    =============================== */
 
 /* Fondo del dropdown */
@@ -238,4 +238,364 @@
   background: #2a2a2a !important;
   color: #fff !important;
 }
+
+/* 🔔 CAMPANA CORREGIDA - SIN SCROLL HORIZONTAL */
+.notif-bell {
+  position: relative;
+  font-size: 1.8rem;
+  color: #ff3c00 !important;
+  transition: transform 0.2s, text-shadow 0.2s;
+  margin-left: 5px;
+}
+
+.notif-bell:hover {
+  transform: scale(1.2);
+  text-shadow: 0 0 10px rgba(255,60,0,0.8);
+}
+
+/* Badge rojo - POSICIÓN CORREGIDA */
+.notif-bell .badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 0.7rem;
+  padding: 0.25em 0.4em;
+}
+
+/* 🔹 Dropdown de notificaciones - POSICIÓN CORREGIDA */
+.notif-dropdown {
+  background: #1a1a1a !important;
+  border: 1px solid #333 !important;
+  border-radius: 8px;
+  min-width: 350px;
+  max-width: 400px;
+  color: #fff !important;
+  left: auto !important;
+  right: 0 !important;
+}
+
+/* Ajustes responsivos para el dropdown */
+@media (max-width: 992px) {
+  .notif-dropdown {
+    position: fixed !important;
+    right: 10px !important;
+    left: auto !important;
+    max-width: calc(100vw - 20px);
+  }
+}
+
+@media (max-width: 576px) {
+  .notif-dropdown {
+    min-width: 300px;
+    max-width: 95vw;
+    right: 10px !important;
+    left: auto !important;
+  }
+  .notif-bell {
+    font-size: 1.6rem;
+    margin-left: 10px;
+  }
+}
+
+/* ===============================
+   ❤️ Reacciones estilo gamer
+   =============================== */
+.reaction-bubble {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+/* Botón principal */
+.main-reaction {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(180deg, #626161 0%, #ed3667 100%);
+  font-size: 26px;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+  cursor: pointer;
+  transition: transform 0.12s ease;
+
+  /* 🔹 Asegura que el ❤ quede centrado */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1; /* evita desajuste vertical */
+}
+
+.main-reaction:hover {
+  transform: scale(1.1);
+}
+
+/* Opciones ocultas por defecto */
+.reaction-options {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%) scale(0.9);
+  display: flex;
+  gap: 14px;
+  padding: 10px;
+  border-radius: 24px;
+  background: #686868;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 50;
+}
+
+/* Cuando se abre */
+.reaction-bubble.open .reaction-options {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+  pointer-events: auto;
+}
+
+/* Botones emoji */
+.reaction-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column; /* emoji arriba, contador abajo */
+  align-items: center;
+  gap: 4px;
+  transition: transform 0.15s ease;
+}
+
+.reaction-btn:hover {
+  transform: scale(1.2);
+}
+
+/* Emoji */
+.reaction-btn .emoji {
+  font-size: 38px; /* grande */
+}
+
+/* Contador */
+.reaction-btn .counter {
+  background: #f0f0f0;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+  min-width: 20px;
+  text-align: center;
+}
+
+.reaction-btn:hover .counter {
+  background: #333;
+  color: #fff;
+}
+
+/* Animación pop */
+.reaction-btn .counter.updated {
+  animation: pop 0.3s ease;
+}
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+
+/* ===============================
+   🎨 Fix: Suscripciones visibles
+   =============================== */
+
+/* Forzar color de texto dentro de las listas de suscripciones */
+.card .list-group-item {
+  background-color: #1a1a1a !important; /* fondo gamer oscuro */
+  color: #f5f5f5 !important;            /* texto claro */
+  border: 1px solid #2a2a2a !important; /* bordes finos */
+}
+
+/* Links a autores/tags */
+.card .list-group-item a {
+  color: #0dcaf0 !important;     /* celeste gamer */
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.card .list-group-item a:hover {
+  color: #0bbbe6 !important;
+  text-decoration: underline;
+}
+
+/* Botón "Dejar de seguir" */
+.card .list-group-item .btn-outline-danger {
+  border-color: #ff3c00 !important;
+  color: #ff3c00 !important;
+}
+
+.card .list-group-item .btn-outline-danger:hover {
+  background: #ff3c00 !important;
+  color: #fff !important;
+}
+
+/* Header de cada tarjeta */
+.card .card-header {
+  background: #ff3c00 !important;  /* naranja gamer */
+  color: #fff !important;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* ===============================
+   🎨 Fix: Texto vacío de suscripciones
+   =============================== */
+.card .card-body .text-muted {
+  color: #aaa !important;   /* gris claro visible */
+  font-style: italic;       /* opcional, para diferenciarlo */
+}
+
+
+/* --- Estilo gamer oscuro para el select --- */
+.form-select {
+  background-color: #1c1c1c !important; /* Fondo oscuro */
+  color: #f5f5f5 !important;           /* Texto claro */
+  border: 1px solid #444 !important;   /* Borde gris */
+  border-radius: 6px;
+  padding: 10px 12px;
+  appearance: none; /* Quitar estilos por defecto */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+/* Flechita ▼ en blanco/naranja */
+.form-select::-ms-expand {
+  display: none; /* quitar flecha en IE/Edge antiguos */
+}
+
+.form-select:focus {
+  background-color: #2a2a2a !important;
+  border-color: #ff3c00 !important; 
+  color: #fff !important;
+  box-shadow: 0 0 8px rgba(255, 60, 0, 0.5);
+}
+
+/* Opciones desplegadas */
+.form-select option {
+  background-color: #1c1c1c !important;
+  color: #ddd !important;
+}
+
+/* Opción seleccionada */
+.form-select option:checked {
+  background-color: #ff3c00 !important;
+  color: #fff !important;
+}
+
+
+/* --- Inputs y textareas gamer --- */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select,
+.form-control {
+  background: #1c1c1c !important;   /* Fondo oscuro */
+  color: #f5f5f5 !important;        /* Texto claro */
+  border: 1px solid #444 !important;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+/* Placeholder gris */
+input::placeholder,
+textarea::placeholder {
+  color: #aaa !important;
+}
+
+/* Cuando reciben foco */
+input:focus,
+textarea:focus,
+select:focus,
+.form-control:focus {
+  background: #2a2a2a !important; /* Sigue oscuro */
+  color: #fff !important;
+  border-color: #ff3c00 !important; /* Naranja gamer */
+  box-shadow: 0 0 8px rgba(255, 60, 0, 0.5) !important;
+}
+
+
+/* === ALERTA DARK PARA FEED === */
+.alert-gamer {
+  background: #1e1e1e;         /* fondo oscuro */
+  color: #ddd;                 /* texto claro */
+  border: 1px solid #333;       /* borde sutil */
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+}
+
+/* Botones dentro de la alerta */
+.alert-gamer .btn {
+  margin: 5px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* Post Cards Gamer */
+.post-card-gamer {
+  border-radius: 10px;
+  transition: 0.25s;
+}
+
+.post-card-gamer:hover {
+  background: #222;
+  border-color: #ff3c00;
+  box-shadow: 0 4px 12px rgba(255,60,0,0.4);
+  transform: scale(1.01);
+}
+
+
+/* Mejorar el área de texto del contenido */
+.content-box {
+  min-height: 400px;      /* altura cómoda */
+  padding: 15px;          /* espacio interno */
+  line-height: 1.5;       /* más aire en las líneas */
+  resize: vertical;       /* que el usuario pueda agrandar si quiere */
+}
+
+
+.content-textarea {
+  width: 100% !important;
+  max-width: 100% !important;   /* rompe el límite */
+  min-height: 500px !important; /* más alto también */
+  resize: none !important;
+  display: block;
+}
+
+
+
+/* === BOTÓN BORRADORES === */
+.btn-drafts {
+  background: linear-gradient(90deg, #6a11cb, #2575fc) !important; /* degradado violeta → azul */
+  color: #fff !important;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.btn-drafts:hover {
+  background: linear-gradient(90deg, #2575fc, #6a11cb) !important;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(37,117,252,0.6);
+}
+
+
+
 
