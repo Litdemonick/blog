@@ -139,6 +139,10 @@ STATICFILES_DIRS = [BASE_DIR / "static"] # ✅ aquí cargas tus íconos (ej: sta
 # ⚡ Importante para producción con Whitenoise
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+STATICFILES_STORAGE = "blog.static_overrides.NoHashStaticFilesStorage"
+
+
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'          # asegúrate que exista: media/
 
