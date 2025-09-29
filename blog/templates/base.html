@@ -377,7 +377,9 @@
 
 <div class="tags-bar text-center">
   {% for tag in all_tags %}
-    <a href="{% url 'blog:post_by_tag' tag.slug %}">#{{ tag.name }}</a>
+    {% if tag.slug %}
+      <a href="{% url 'blog:post_by_tag' tag.slug %}">#{{ tag.name }}</a>
+    {% endif %}
   {% empty %}
     <span class="text-muted">No hay tags todavía</span>
   {% endfor %}
@@ -387,6 +389,7 @@
   {% include 'partials/_messages.html' %}
   {% block content %}{% endblock %}
 </div>
+
 
 <footer>
   <div class="container">

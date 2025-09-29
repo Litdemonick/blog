@@ -13,4 +13,6 @@ django-taggit>=5.0.1
 gunicorn
 django-ckeditor-5
 whitenoise
+django-widget-tweaks==1.5.0
+
 

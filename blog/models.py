@@ -62,11 +62,14 @@ class Post(models.Model):
         ("xbox", "Xbox"),
         ("nintendo", "Nintendo Switch"),
         ("mobile", "Celular"),
+        ("ps", "PlayStation"),
+        
     ]
 
     title = models.CharField(max_length=200, verbose_name='Título')
     slug = models.SlugField(max_length=220, unique=True, db_index=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    is_visible = models.BooleanField(default=True)  # 👈 nuevo campo
     cover = models.ImageField(upload_to='covers/', blank=True, null=True)
     platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES, default="pc")
     excerpt = models.CharField(max_length=300, blank=True)

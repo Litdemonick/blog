@@ -42,6 +42,17 @@
       <div class="text-center mt-4">
         <a href="{% url 'blog:profile_edit' %}" class="btn-edit">✏️ Editar perfil</a>
       </div>
+      <!-- 🔹 Botón para ver borradores -->
+      <div class="text-center mt-3">
+        <a href="{% url 'blog:my_drafts' %}" class="btn-drafts">
+          📂 Ver mis posts en borrador
+        </a>
+      </div>
+      <div class="text-center mt-3">
+        <a href="{% url 'blog:mis_posts_publicados' %}" class="btn btn-success">
+          📢 Ver mis posts publicados
+        </a>
+      </div>
     {% endif %}
 
     <!-- 🔹 Sección de posts del usuario -->
@@ -120,6 +131,25 @@
   transform: scale(1.05);
 }
 
+/* === BOTÓN BORRADORES === */
+.btn-drafts {
+  background: #ffb300;
+  border: none;
+  color: #000;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  transition: 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-drafts:hover {
+  background: #e6a100;
+  color: #fff;
+  transform: scale(1.05);
+}
+
 /* === POSTS DEL USUARIO === */
 .user-posts-scroll {
   max-height: 200px;         /* 🔹 ajustado para que a los 3 posts aparezca */
@@ -129,8 +159,6 @@
   box-sizing: border-box;
   scrollbar-gutter: stable;  /* 🔹 reserva espacio para el scroll */
 }
-
-
 
 .user-post-card {
   display: block;
@@ -149,10 +177,10 @@
 
 .user-post-card:hover {
   background: #333;
-  outline: 2px solid #ff3c00;   /* ✅ borde exterior en hover */
-  outline-offset: 0px;          /* lo mantiene alineado */
+  outline: 2px solid #ff3c00;
+  outline-offset: 0px;
   box-shadow: 0 4px 12px rgba(255, 60, 0, 0.4);
-  transform: scale(1.01);       /* 🔹 menos agresivo */
+  transform: scale(1.01);
   z-index: 2;
 }
 
@@ -167,8 +195,5 @@
   color: #aaa;
   font-size: 0.85rem;
 }
-
-
-
 </style>
 {% endblock %}

@@ -46,6 +46,40 @@ from .models import (
 
 
 @login_required
+def my_published_posts(request):
+    posts = Post.objects.filter(
+        author=request.user,
+        status="published"
+    ).order_by("-created")
+    return render(request, "posts/mis_posts_publicados.html", {"posts": posts})
+
+
+@login_required
+def toggle_visibility(request, post_id):
+    post = get_object_or_404(Post, id=post_id, author=request.user)
+    post.is_visible = not post.is_visible
+    post.save()
+    return redirect("blog:mis_posts_publicados")
+
+@login_required
+def delete_post(request, post_id):
+    post = get_object_or_404(Post, id=post_id, author=request.user)
+    post.delete()
+    return redirect("blog:mis_posts_publicados")
+
+
+
+
+
+@login_required
+def my_drafts(request):
+    drafts = Post.objects.filter(author=request.user, status="draft").order_by("-created")
+    return render(request, "my_drafts.html", {"drafts": drafts})
+
+
+
+
+@login_required
 def mark_all_notifications_read(request):
     if request.method == "POST":
         request.user.notifications.filter(is_read=False).update(is_read=True)
@@ -87,7 +121,10 @@ def signup_view(request):
 
 
 def global_tags(request):
-    return {"all_tags": Tag.objects.all()[:15]}  # mostrar solo los 15 primeros
+    return {
+        "all_tags": Tag.objects.exclude(slug="").all()[:15]
+    }
+
 
 
 @login_required
@@ -158,6 +195,7 @@ def unpin_review(request, review_id):
 
 # --------- Listado / Búsqueda / Paginación ----------
 from django.db.models import Count, Q
+
 class PostListView(ListView):
     model = Post
     template_name = 'post_list.html'
@@ -165,7 +203,7 @@ class PostListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        qs = Post.objects.filter(status='published')
+        qs = Post.objects.filter(status="published", is_visible=True)
         q = self.request.GET.get('q')
         tag = self.kwargs.get('tag_slug')
         if q:
@@ -453,8 +491,9 @@ def notification_mark_read(request, pk):
 class AuthorRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         obj = self.get_object()
-        return obj.author == self.request.user
-    
+        # Permite al autor o a staff
+        return obj.author == self.request.user or self.request.user.is_staff
+
 
 
 

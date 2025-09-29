@@ -555,3 +555,47 @@ select:focus,
   box-shadow: 0 4px 12px rgba(255,60,0,0.4);
   transform: scale(1.01);
 }
+
+
+/* Mejorar el área de texto del contenido */
+.content-box {
+  min-height: 400px;      /* altura cómoda */
+  padding: 15px;          /* espacio interno */
+  line-height: 1.5;       /* más aire en las líneas */
+  resize: vertical;       /* que el usuario pueda agrandar si quiere */
+}
+
+
+.content-textarea {
+  width: 100% !important;
+  max-width: 100% !important;   /* rompe el límite */
+  min-height: 500px !important; /* más alto también */
+  resize: none !important;
+  display: block;
+}
+
+
+
+/* === BOTÓN BORRADORES === */
+.btn-drafts {
+  background: linear-gradient(90deg, #6a11cb, #2575fc) !important; /* degradado violeta → azul */
+  color: #fff !important;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.btn-drafts:hover {
+  background: linear-gradient(90deg, #2575fc, #6a11cb) !important;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(37,117,252,0.6);
+}
+
+
+
+

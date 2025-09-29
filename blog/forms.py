@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from taggit.forms import TagWidget  # ✅ Importa el widget correcto de django-taggit
 from .models import Post, Comment, Review, Profile
 
 
@@ -17,26 +18,38 @@ class SignUpForm(UserCreationForm):
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'cover', 'excerpt', 'content', 'status', 'tags',"platform"]
+        fields = ['title', 'cover', 'excerpt', 'content', 'status', 'tags', "platform"]
         widgets = {
-            # 👉 Aquí el campo tags se hace texto para poder escribir nuevos,
-            #    y Django-Taggit reconocerá tags separados por coma.
-            'tags': forms.TextInput(
+            'tags': TagWidget(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Escribe tags separados por coma (ej: zelda, nintendo, rumores)"
                 }
             ),
-
-            # 👉 El campo content ahora es grande y rectangular
             'content': forms.Textarea(
-                attrs={
-                    "class": "form-control content-textarea",
-                    "style": "min-height:400px; width:100%; resize:vertical;",
-                    "placeholder": "Escribe el contenido de tu post aquí..."
-                }
-            ),
+            attrs={
+                "class": "form-control content-textarea",
+                "placeholder": "Escribe el contenido de tu post aquí..."
+            }
+        ),
+
+        
+
         }
+
+    # 🔹 aquí marcamos `tags` como requerido
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['tags'].required = True   # ✅ obliga a poner al menos uno
+
+    # 🔹 validación extra (por si mandan string vacío)
+    def clean_tags(self):
+        tags = self.cleaned_data.get('tags')
+        if not tags:  # vacío o None
+            raise forms.ValidationError("No puedes dejar este campo vacío.")
+        return tags
+
+
 
 
 # ---------- Comentarios ----------

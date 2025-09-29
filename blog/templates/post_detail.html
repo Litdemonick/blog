@@ -15,6 +15,27 @@
   </div>
 
 
+  <!-- 🔹 Botón Editar post (solo dueño o staff) -->
+{% if user.is_authenticated and user == object.author %}
+  <div class="mt-2">
+    <a href="{% url 'blog:post_edit' object.slug %}" class="btn btn-warning btn-sm">✏️ Editar post</a>
+    <form method="post" action="{% url 'blog:post_delete' object.slug %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger btn-sm">🗑 Eliminar post</button>
+    </form>
+  </div>
+{% elif user.is_authenticated and user.is_staff %}
+  <div class="mt-2">
+    <a href="{% url 'blog:post_edit' object.slug %}" class="btn btn-warning btn-sm">✏️ Editar post</a>
+    <form method="post" action="{% url 'blog:post_delete' object.slug %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger btn-sm">🗑 Eliminar post</button>
+    </form>
+  </div>
+{% endif %}
+
+
+
   {% if user.is_authenticated and user != object.author %}
   <form method="post" action="{% url 'blog:subscribe_author' object.author.username %}">
     {% csrf_token %}
@@ -31,8 +52,13 @@
 
 <div class="mt-2 d-flex flex-wrap align-items-center gap-2">
   {% for t in object.tags.all %}
-    <span class="badge text-bg-secondary">#{{ t.name }}</span>
+    <!-- ✅ Tag con enlace -->
+    <a href="{% url 'blog:post_by_tag' t.slug %}" 
+       class="badge text-bg-secondary text-decoration-none">
+       #{{ t.name }}
+    </a>
 
+    <!-- ✅ Botón seguir/dejar de seguir solo si NO eres el autor -->
     {% if user.is_authenticated and user != object.author %}
       <form method="post" action="{% url 'blog:subscribe_tag' t.slug %}" class="d-inline">
         {% csrf_token %}

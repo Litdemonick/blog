@@ -1,15 +1,90 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 {% block content %}
 <div class="container mt-5" style="max-width: 700px;">
-  <div class="card shadow-sm p-4 bg-dark text-light rounded">
-    <h2 class="mb-4 text-center">📝 Nuevo Post</h2>
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <div class="text-center">
-        <button type="submit">Guardar</button>
-      </div>
-    </form>
+  <div class="card shadow-lg bg-dark text-light rounded-3 border-0">
+    <div class="card-body p-4">
+      <h2 class="mb-4 text-center text-warning">📝 Nuevo Post</h2>
+
+      <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <!-- 🔹 Título -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ form.title.label }}</label>
+          {{ form.title }}
+          {% if form.title.errors %}
+            <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- 🔹 Cover -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ form.cover.label }}</label>
+          {{ form.cover }}
+          {% if form.cover.errors %}
+            <div class="invalid-feedback d-block">{{ form.cover.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- 🔹 Excerpt -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ form.excerpt.label }}</label>
+          {{ form.excerpt }}
+          {% if form.excerpt.errors %}
+            <div class="invalid-feedback d-block">{{ form.excerpt.errors }}</div>
+          {% endif %}
+        </div>
+
+       <!-- 🔹 Content -->
+        <div class="mb-3">
+          <label class="form-label fw-bold d-block mb-2">{{ form.content.label }}</label>
+          {{ form.content }}
+          {% if form.content.errors %}
+            <div class="invalid-feedback d-block">{{ form.content.errors }}</div>
+          {% endif %}
+        </div>
+
+
+
+        <!-- 🔹 Status -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ form.status.label }}</label>
+          {{ form.status }}
+          {% if form.status.errors %}
+            <div class="invalid-feedback d-block">{{ form.status.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- 🔹 Tags -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ form.tags.label }}</label>
+          {{ form.tags }}
+          <div class="form-text text-muted">
+            Usa comas para separar varias etiquetas (ejemplo: zelda, nintendo, rumores)
+          </div>
+          {% if form.tags.errors %}
+            <div class="invalid-feedback d-block">{{ form.tags.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- 🔹 Platform -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">{{ form.platform.label }}</label>
+          {{ form.platform }}
+          {% if form.platform.errors %}
+            <div class="invalid-feedback d-block">{{ form.platform.errors }}</div>
+          {% endif %}
+        </div>
+
+        <!-- 🔹 Botón -->
+        <div class="text-center">
+          <button type="submit" class="btn btn-warning px-4 py-2 fw-bold">
+            💾 Guardar
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}
