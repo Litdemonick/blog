@@ -4,12 +4,12 @@ from django.utils.text import slugify
 from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from ckeditor_uploader.fields import RichTextUploadingField
+from ckeditor.fields import RichTextField
 from taggit.managers import TaggableManager
 from taggit.models import Tag
 from django.utils import timezone
-from django_ckeditor_5.fields import CKEditor5Field
-from taggit.managers import TaggableManager
 from django.db.models import Q
+
 
 
 # ----------------------------

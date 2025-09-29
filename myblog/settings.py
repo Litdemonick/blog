@@ -45,13 +45,11 @@ INSTALLED_APPS = [
     'taggit',                # Tags
     'rest_framework',
     "widget_tweaks",
-    'django_ckeditor_5',          # CKEditor 5 (si usas CKEditor5Field en modelos)
- 
-
 
     # Apps locales
     'blog.apps.BlogConfig',
 ]
+
 
 # --- Middleware (orden importante) ---
 MIDDLEWARE = [
