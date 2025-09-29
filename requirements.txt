@@ -7,6 +7,11 @@ asgiref>=3.7.2
 whitenoise
 gunicorn>=21.2.0
 tzdata>=2023.3
+<<<<<<< HEAD
+=======
+djangorestframework
+pytest
+>>>>>>> origin/main
 django-taggit>=5.0.1
 gunicorn
 whitenoise

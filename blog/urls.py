@@ -3,6 +3,10 @@ from django.contrib.auth import views as auth_views
 from . import views
 from django.urls import path
 from . import views
+<<<<<<< HEAD
+=======
+from .views import ReactionView
+>>>>>>> origin/main
 
 app_name = "blog"
 
@@ -18,6 +22,13 @@ urlpatterns = [
     path("post/<slug:slug>/", views.PostDetailView.as_view(), name="post_detail"),
     path("post/<slug:slug>/editar/", views.PostUpdateView.as_view(), name="post_update"),
     path("post/<slug:slug>/eliminar/", views.PostDeleteView.as_view(), name="post_delete"),
+    path('post/<int:post_id>/reaction/', views.toggle_reaction, name='toggle_reaction'),
+    path('api/react/', views.react_api, name='react_api'),
+    
+    path("post/<int:post_id>/reaction-users/<str:reaction_type>/", views.reaction_users, name="reaction_users"),
+    
+    # --------- Plataformas ----------
+    path("plataforma/<str:platform_slug>/", views.post_by_platform, name="post_by_platform"),
 
     # --------- Plataformas ----------
     path("plataforma/<str:platform_slug>/", views.post_by_platform, name="post_by_platform"),

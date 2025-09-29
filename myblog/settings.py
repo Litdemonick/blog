@@ -44,6 +44,8 @@ INSTALLED_APPS = [
 
     # Apps locales
     'blog.apps.BlogConfig',
+
+    'rest_framework',
 ]
 
 # --- Middleware (orden importante) ---
@@ -133,3 +135,13 @@ LOGOUT_REDIRECT_URL = 'blog:post_list'
 
 # --- Defaults ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
