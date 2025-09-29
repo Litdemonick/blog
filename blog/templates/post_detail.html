@@ -15,6 +15,44 @@
     · {{ object.created|date:"d/m/Y g:i a" }}
   </div>
 
+
+  {% if user.is_authenticated and user != object.author %}
+  <form method="post" action="{% url 'blog:subscribe_author' object.author.username %}">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    {% if author_subscribed %}
+      <button class="btn btn-danger btn-sm">❌ Dejar de seguir a {{ object.author.username }}</button>
+    {% else %}
+      <button class="btn btn-primary btn-sm">➕ Seguir a {{ object.author.username }}</button>
+    {% endif %}
+  </form>
+{% endif %}
+
+
+
+<div class="mt-2 d-flex flex-wrap align-items-center gap-2">
+ {% for t in object.tags.all %}
+  <span class="badge text-bg-secondary">#{{ t.name }}</span>
+
+  {% if user.is_authenticated %}
+    <form method="post" action="{% url 'blog:subscribe_tag' t.slug %}" class="d-inline">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      {% if t.slug in subscribed_tag_slugs %}
+        <button class="btn btn-danger btn-sm">❌ Dejar de seguir</button>
+      {% else %}
+        <button class="btn btn-outline-primary btn-sm">➕ Seguir</button>
+      {% endif %}
+    </form>
+  {% endif %}
+{% empty %}
+  <small class="text-muted">Sin tags</small>
+{% endfor %}
+
+</div>
+
+
+
   <!-- Promedio -->
   <div class="my-3 rating">
     <strong>⭐ Promedio:</strong> 

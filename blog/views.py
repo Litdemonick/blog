@@ -194,7 +194,8 @@ class PostListView(ListView):
 
         return ctx
 
-# --------- Detalle / Reseñas / Comentarios ----------
+from .models import Subscription  # importa tu modelo de suscripciones
+
 class PostDetailView(DetailView):
     model = Post
     template_name = "post_detail.html"
@@ -214,7 +215,7 @@ class PostDetailView(DetailView):
             ctx["reviews"] = post.reviews.filter(parent__isnull=True, status="visible")
             ctx["is_owner"] = False
 
-        # 🔹 Comentarios (si también quieres manejarlos)
+        # 🔹 Comentarios
         if user.is_authenticated and (user == post.author or user.is_staff):
             ctx["comments"] = post.comments.filter(parent__isnull=True)
         else:
@@ -223,6 +224,21 @@ class PostDetailView(DetailView):
         # 🔹 Formularios
         ctx["review_form"] = ReviewForm()
         # ctx["comment_form"] = CommentForm()
+
+        # 🔹 Suscripciones (autor + tags)
+        if user.is_authenticated:
+            # Autor
+            ctx["author_subscribed"] = Subscription.objects.filter(
+                user=user, author=post.author
+            ).exists()
+
+            # Tags
+            tag_slugs = post.tags.values_list("slug", flat=True)
+            subs = Subscription.objects.filter(user=user, tag__slug__in=tag_slugs)
+            ctx["subscribed_tag_slugs"] = set(subs.values_list("tag__slug", flat=True))
+        else:
+            ctx["author_subscribed"] = False
+            ctx["subscribed_tag_slugs"] = set()
 
         return ctx
 

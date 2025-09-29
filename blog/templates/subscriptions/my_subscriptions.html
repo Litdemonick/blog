@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mis suscripciones{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">Mis suscripciones</h2>
+
+<div class="row">
+  <!-- Autores seguidos -->
+  <div class="col-12 col-lg-6 mb-4">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header">
+        <strong>Autores que sigo</strong>
+      </div>
+      <div class="card-body">
+        {% if author_subs %}
+          <ul class="list-group list-group-flush">
+            {% for s in author_subs %}
+              <li class="list-group-item bg-dark text-light d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                  {% if s.author.profile.avatar %}
+                    <img src="{{ s.author.profile.avatar.url }}" width="32" height="32" class="rounded-circle" alt="">
+                  {% else %}
+                    <img src="{% static 'img/default-avatar.png' %}" width="32" height="32" class="rounded-circle" alt="">
+                  {% endif %}
+                  <a class="text-info fw-bold" href="{% url 'blog:profile_detail' s.author.username %}">
+                    @{{ s.author.username }}
+                  </a>
+                </div>
+                <form method="post" action="{% url 'blog:unsubscribe_author' s.author.username %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button class="btn btn-sm btn-outline-danger">Dejar de seguir</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted m-0">Aún no sigues a ningún autor.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tags seguidos -->
+  <div class="col-12 col-lg-6 mb-4">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header">
+        <strong>Tags que sigo</strong>
+      </div>
+      <div class="card-body">
+        {% if tag_subs %}
+          <ul class="list-group list-group-flush">
+            {% for s in tag_subs %}
+              <li class="list-group-item bg-dark text-light d-flex align-items-center justify-content-between">
+                <a class="badge text-bg-secondary text-decoration-none" href="{% url 'blog:post_by_tag' s.tag.slug %}">
+                  #{{ s.tag.name }}
+                </a>
+                <form method="post" action="{% url 'blog:unsubscribe_tag' s.tag.slug %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                  <button class="btn btn-sm btn-outline-danger">Dejar de seguir</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted m-0">Aún no sigues ningún tag.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mt-3">
+  <a class="btn btn-outline-info" href="{% url 'blog:my_personal_feed' %}">Ir a mi feed</a>
+</div>
+{% endblock %}

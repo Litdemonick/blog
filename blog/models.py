@@ -5,7 +5,11 @@ from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from ckeditor_uploader.fields import RichTextUploadingField
 from taggit.managers import TaggableManager
+from taggit.models import Tag
 from django.utils import timezone
+from django_ckeditor_5.fields import CKEditor5Field
+from taggit.managers import TaggableManager
+from django.db.models import Q
 
 
 # ----------------------------
@@ -334,3 +338,40 @@ class Reaction(models.Model):
 
     def __str__(self):
         return f"{self.user.username} reaccionó {self.type} a {self.post}"
+
+
+class Subscription(models.Model):
+    """
+    Una suscripción apunta a EXACTAMENTE un objetivo:
+    - un autor (User)
+    - o un tag   (Tag)
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="subscriptions")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="author_followers")
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, null=True, blank=True, related_name="tag_followers")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Evitar duplicados y forzar que sólo uno (author o tag) esté definido
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "author"], condition=Q(tag__isnull=True),
+                name="uniq_user_author_subscription"
+            ),
+            models.UniqueConstraint(
+                fields=["user", "tag"], condition=Q(author__isnull=True),
+                name="uniq_user_tag_subscription"
+            ),
+            models.CheckConstraint(
+                check=(
+                    (Q(author__isnull=False) & Q(tag__isnull=True)) |
+                    (Q(author__isnull=True) & Q(tag__isnull=False))
+                ),
+                name="one_target_either_author_or_tag"
+            ),
+        ]
+
+    def __str__(self):
+        if self.author_id:
+            return f"{self.user.username} → Autor:{self.author.username}"
+        return f"{self.user.username} → Tag:{self.tag.slug}"

@@ -1,9 +1,13 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from . import views_subscriptions
+from . import views_subscriptions as subs
 from . import views
 from django.urls import path
 from . import views
 from .views import ReactionView
+from .feeds import AuthorFeed, TagFeed 
+
 
 app_name = "blog"
 
@@ -69,6 +73,24 @@ urlpatterns = [
 
     path("review/<int:review_id>/pin/", views.pin_review, name="pin_review"),
     path("review/<int:review_id>/unpin/", views.unpin_review, name="unpin_review"),
+
+
+    
+    # --------- Feeds ----------
+    path("feeds/author/<str:username>/", AuthorFeed(), name="author_feed"),
+    path("feeds/tag/<slug:slug>/", TagFeed(), name="tag_feed"),
+
+    # --------- Suscripciones (toggle) ----------
+    path("subscribe/author/<str:username>/", subs.subscribe_author, name="subscribe_author"),
+    path("subscribe/tag/<slug:slug>/", subs.subscribe_tag, name="subscribe_tag"),
+
+    # --------- Suscripciones: páginas del usuario ----------
+    path("suscripciones/", subs.my_subscriptions, name="my_subscriptions"),
+    path("mi-feed/", subs.my_personal_feed, name="my_personal_feed"),
+    path("suscripciones/unfollow/<str:username>/", views_subscriptions.unsubscribe_author, name="unsubscribe_author"),
+    path("suscripciones/unfollow/tag/<slug:slug>/", views_subscriptions.unsubscribe_tag, name="unsubscribe_tag"),
+
+
 
 
 ]

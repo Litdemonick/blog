@@ -44,6 +44,7 @@ INSTALLED_APPS = [
 
     # Apps locales
     'blog.apps.BlogConfig',
+    
 
     'rest_framework',
 ]

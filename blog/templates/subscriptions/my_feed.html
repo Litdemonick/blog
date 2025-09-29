@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mi feed{% endblock %}
+
+{% block content %}
+<h2 class="mb-3">Mi feed</h2>
+
+{% if posts %}
+  {% for p in posts %}
+    <div class="card bg-dark border-secondary mb-3">
+      <div class="card-body">
+        <h4 class="card-title">
+          <a class="text-warning text-decoration-none" href="{{ p.get_absolute_url }}">{{ p.title }}</a>
+        </h4>
+
+        <div class="post-meta mb-2">
+          por <a class="username" href="{% url 'blog:profile_detail' p.author.username %}">{{ p.author.username }}</a>
+          · {{ p.created|date:"d/m/Y g:i a" }}
+        </div>
+
+        {% if p.cover %}
+          <a href="{{ p.get_absolute_url }}">
+            <img src="{{ p.cover.url }}" alt="" class="img-fluid rounded mb-2">
+          </a>
+        {% endif %}
+
+        <p class="text-light">
+          {{ p.content|striptags|truncatewords:40 }}
+        </p>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          {% for t in p.tags.all %}
+            <a href="{% url 'blog:post_by_tag' t.slug %}" class="badge text-bg-secondary text-decoration-none">#{{ t.name }}</a>
+          {% empty %}
+            <span class="text-muted">Sin tags</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="alert alert-secondary">
+    Todavía no hay contenido en tu feed.
+    <div class="mt-2">
+      <a class="btn btn-sm btn-primary" href="{% url 'blog:post_list' %}">Explorar posts</a>
+      <a class="btn btn-sm btn-dark" href="{% url 'blog:my_subscriptions' %}">Gestionar suscripciones</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
