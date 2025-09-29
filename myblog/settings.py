@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 import dj_database_url   # 👈 para leer DATABASE_URL de Railway
 
+
 # --- Rutas base ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
