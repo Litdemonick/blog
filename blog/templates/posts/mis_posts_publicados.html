@@ -56,11 +56,10 @@
                                onclick="event.stopPropagation();">
                                 ✏️ Editar
                             </a>
-
-                            <a href="{% url 'blog:eliminar_post' post.id %}"
-                               class="btn btn-danger btn-sm"
-                               onclick="event.stopPropagation(); return confirm('⚠️ Esta acción eliminará el post permanentemente. ¿Estás seguro?');">
-                                🗑️ Eliminar
+                              <a href="#" class="btn btn-danger btn-sm delete-post-btn"
+                            data-slug="{{ post.slug }}"
+                            onclick="event.stopPropagation();">
+                            🗑️ Eliminar
                             </a>
                         </div>
                     </div>
@@ -150,13 +149,36 @@
     }
 </style>
 <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        document.querySelectorAll(".post-card").forEach(card => {
-            card.addEventListener("click", () => {
-                window.location = card.dataset.url;
-            });
-        });
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".delete-post-btn").forEach(btn => {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+
+      // 🚨 Confirmación primero
+      if (!confirm("⚠️ Esta acción eliminará el post permanentemente. ¿Estás seguro?")) {
+        return; // si cancela, no pasa nada
+      }
+
+      const slug = this.dataset.slug;
+
+      fetch(`/post/${slug}/delete/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": "{{ csrf_token }}",  // asegúrate de pasar CSRF
+        },
+      })
+      .then(res => {
+        if (res.ok) {
+          // Quitar el post de la lista
+          this.closest(".col-md-6").remove();
+        } else {
+          alert("⚠️ No se pudo eliminar el post.");
+        }
+      });
     });
+  });
+});
 </script>
+
 
 {% endblock %}
