@@ -7,7 +7,7 @@ from ckeditor_uploader.fields import RichTextUploadingField
 from taggit.managers import TaggableManager
 from taggit.models import Tag
 from django.utils import timezone
-from django_ckeditor_5.fields import CKEditor5Field
+from ckeditor5.fields import CKEditor5Field
 from taggit.managers import TaggableManager
 from django.db.models import Q
 

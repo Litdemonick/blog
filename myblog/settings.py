@@ -3,10 +3,10 @@ import os
 import dj_database_url   # 👈 para leer DATABASE_URL de Railway
 
 # --- Rutas base ---
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 # --- Seguridad / Debug ---
-SECRET_KEY = 'dev-secret-key-cambia-esto-en-produccion'
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-cambia-esto-en-produccion")
 
 # ⚡ DEBUG se controla con variable de entorno (en Railway pon DEBUG=False)
 DEBUG = os.environ.get("DEBUG", "True") == "True"
@@ -39,11 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',   # ✅ solo una vez
 
     # Terceros
-    'ckeditor',              # Editor
+    'ckeditor',              # Editor clásico
     'ckeditor_uploader',     # Subida de archivos/imagenes desde CKEditor
     'taggit',                # Tags
     'rest_framework',
     "widget_tweaks",
+    "ckeditor5",             # CKEditor 5 (si usas CKEditor5Field en modelos)
 
     # Apps locales
     'blog.apps.BlogConfig',
@@ -138,6 +139,18 @@ CKEDITOR_CONFIGS = {
         'toolbar': 'full',
         'height': 300,
         'width': '100%',
+    }
+}
+
+# --- CKEditor5 (config opcional si usas ckeditor5.fields.CKEditor5Field) ---
+CKEDITOR5_CONFIGS = {
+    'default': {
+        'toolbar': [
+            'heading', '|',
+            'bold', 'italic', 'link', 'underline', '|',
+            'bulletedList', 'numberedList', '|',
+            'blockQuote', 'imageUpload'
+        ]
     }
 }
 
