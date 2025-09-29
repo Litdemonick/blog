@@ -1,47 +1,73 @@
 # 📰 Blog Django – Autenticación, Autorización y Contenido Enriquecido
 
-Proyecto académico y profesional desarrollado en *Django* que implementa un sistema de blog completo con autenticación de usuarios, autorización por roles, CRUD de publicaciones, comentarios con moderación, sistema de reviews y enriquecimiento de contenido.  
-Este proyecto fue desarrollado por el equipo *Los5Furiosos*:  
+Proyecto académico y profesional desarrollado en **Django** que implementa un sistema de blog completo con autenticación de usuarios, autorización por roles, CRUD de publicaciones, comentarios con moderación, sistema de reviews y enriquecimiento de contenido.  
+
+Este proyecto fue desarrollado por el equipo **Los5Furiosos**:  
 *Carlos Miranda, Eddie Man, Eliecias Cubilla, Harold Morales y Brayan Quintero.*
 
 ---
 
 ## 🚀 Características principales
 
-- 🔑 *Autenticación y autorización*
-  - Registro y login con correo/usuario y contraseña.
-  - Logout seguro (requiere POST por defecto).
-  - Redirección tras crear cuenta o cerrar sesión.
-  - Perfiles de usuario con avatar y bio.
+### 🔑 Autenticación y autorización
+- Registro y login con correo/usuario y contraseña.
+- Logout seguro (requiere POST por defecto).
+- Redirección tras crear cuenta o cerrar sesión.
+- Perfiles de usuario con avatar y bio.
+- Control de permisos y roles (usuario, autor, moderador, administrador).
 
-- 📝 *Gestión de publicaciones (CRUD)*
-  - Crear, leer, editar y eliminar posts.
-  - Solo el autor puede editar o eliminar su propio contenido.
-  - Integración con *ckeditor* para texto enriquecido.
-  - Subida de imágenes mediante ImageField.
-  - Etiquetas y categorías con *django-taggit*.
-  - Paginación y búsqueda integrada.
+### 📝 Gestión de publicaciones (CRUD)
+- Crear, leer, editar y eliminar posts.
+- Solo el autor puede editar o eliminar su propio contenido.
+- Integración con **ckeditor** para texto enriquecido.
+- Subida de imágenes mediante **ImageField**.
+- Etiquetas y categorías con **django-taggit**.
+- Paginación y búsqueda integrada.
 
-- 💬 *Comentarios*
-  - Los usuarios pueden comentar en los posts.
-  - Los autores tienen control total sobre los comentarios de su post:
-    - 🔒 Bloquear comentarios negativos.
-    - 👁 Ocultar comentarios temporalmente.
-    - 👁‍🗨 Mostrar comentarios ocultos.
-    - 🗑 Eliminar comentarios.
-  - El público solo ve comentarios con estado *Visible*.
-  - Los dueños del post ven todos y tienen botones de moderación.
+### 💬 Comentarios con moderación
+- Los usuarios pueden comentar en los posts.
+- Moderación avanzada para el autor del post:
+  - 🔒 Bloquear → marcar como inapropiado.
+  - 👁 Ocultar → quitar de la vista pública sin borrar.
+  - 👁‍🗨 Mostrar → volver visible.
+  - 🗑 Eliminar → borrar definitivamente.
+- El público solo ve los comentarios visibles.
+- Botones de acción implementados con formularios **POST + CSRF** para seguridad.
 
-- ⭐ *Reviews*
-  - Sistema de valoraciones de 1 a 5 estrellas.
-  - Validación para evitar votos duplicados.
-  - Promedio visible en el detalle de cada post.
+### ⭐ Reviews
+- Valoraciones de 1 a 5 estrellas.
+- Promedio de reviews visible en cada post.
+- Validación para evitar votos duplicados.
 
-- 🔍 *Extras*
-  - Búsqueda de posts por título o contenido.
-  - Filtro por etiquetas.
-  - Paginación en listados.
-  - Panel de administración de Django habilitado para control global.
+### 🎭 Reacciones rápidas (emoticones)
+- Like 👍, Love ❤️, Risa 😂, Sorpresa 😮, Triste 😢.
+- Un usuario puede reaccionar una sola vez por tipo en cada post.
+- Toggle automático (añadir/quitar).
+- Actualización en vivo con AJAX/HTMX.
+
+### ⬆⬇ Votos y comentarios destacados
+- Sistema de upvotes/downvotes en comentarios.
+- Prevención de votos múltiples por usuario.
+- Orden dinámico: **comentarios fijados → score → fecha**.
+- Moderadores pueden fijar/desfijar comentarios.
+
+### 📢 Menciones y notificaciones
+- Detección automática de menciones (@usuario).
+- Notificación al usuario mencionado con enlace directo al comentario.
+- Bandeja de notificaciones con estado leído/no leído.
+
+### 📰 Suscripciones y feeds
+- Los usuarios pueden suscribirse a:
+  - Autores específicos.
+  - Etiquetas/temas.
+- Feeds RSS generados automáticamente.
+- Evita duplicados en suscripciones.
+
+### 🔍 Extras
+- Búsqueda de posts por título o contenido.
+- Filtro por etiquetas.
+- Paginación en listados.
+- Panel de administración de Django para gestión global.
 
 ---
 
@@ -49,38 +75,34 @@ Este proyecto fue desarrollado por el equipo *Los5Furiosos*:
 
 Antes de comenzar, asegúrate de tener instalado:
 
-- *Python 3.10+*
-- *pip* (gestor de paquetes de Python)
-- *virtualenv* (opcional, pero recomendado)
-- *SQLite* (incluido por defecto con Django)
+- **Anaconda (conda 24+)**
+- **Python 3.10+**
+- **pip** (gestor de paquetes de Python)
+- **SQLite** (incluido por defecto con Django)
 
-Dependencias principales (en requirements.txt):
+Dependencias principales (archivo `requirements.txt`):
 - Django
 - Pillow (manejo de imágenes)
 - django-ckeditor (texto enriquecido)
 - django-taggit (etiquetas)
-- crispy-forms (estilos de formularios)
-- bootstrap (integración visual)
+- crispy-forms (formularios estilizados)
+- bootstrap (frontend)
+- htmx (actualización parcial de vistas)
 
 ---
 
-## ⚙ Instalación
+## ⚙ Instalación (con Anaconda)
 
-Sigue estos pasos para clonar y ejecutar el proyecto en tu entorno local:
-
-bash
+```bash
 # 1️⃣ Clonar el repositorio
 git clone https://github.com/Los5Furiosos/blog.git
 cd blog
 
-# 2️⃣ Crear un entorno virtual
-python -m venv .venv
+# 2️⃣ Crear entorno con Anaconda
+conda create -n bloggame python=3.10 -y
 
-# 3️⃣ Activar el entorno virtual
-# Linux/MacOS
-source .venv/bin/activate
-# Windows (PowerShell)
-.venv\Scripts\activate
+# 3️⃣ Activar entorno
+conda activate bloggame
 
 # 4️⃣ Instalar dependencias
 pip install -r requirements.txt
@@ -88,42 +110,43 @@ pip install -r requirements.txt
 # 5️⃣ Aplicar migraciones
 python manage.py migrate
 
-# 6️⃣ Crear superusuario (para acceso al panel de administración)
+# 6️⃣ Crear superusuario (para panel de administración)
 python manage.py createsuperuser
 
-# 7️⃣ Ejecutar el servidor
+# 7️⃣ Ejecutar servidor
 python manage.py runserver
 
+👉 Accede en tu navegador a: http://127.0.0.1:8000/
 
-Accede en tu navegador a: 👉 http://127.0.0.1:8000/
 
----
+🛡 Moderación de comentarios
 
-## 🛡 Moderación de comentarios
+El dueño del post puede:
 
-El *dueño del post* puede:
-- Bloquear (block) → marca el comentario como inapropiado.
-- Ocultar (hide) → lo quita de la vista pública sin eliminarlo.
-- Mostrar (show) → lo vuelve visible al público.
-- Eliminar (delete) → lo borra permanentemente.
+Bloquear (block) → marca el comentario como inapropiado.
 
-El control se hace directamente desde la vista de detalle del post.  
-Se añadieron *botones con formularios POST y CSRF* para garantizar seguridad.
+Ocultar (hide) → lo quita de la vista pública.
 
----
+Mostrar (show) → vuelve a hacerlo visible.
 
-## 📂 Estructura del proyecto
+Eliminar (delete) → lo borra permanentemente.
 
-bash
+La moderación se realiza directamente desde la vista del post.
+Se usan formularios con POST y CSRF para máxima seguridad.
+
+
+📂 Estructura del proyecto
+
+
 blog/
-├── blog/                # Configuración principal del proyecto
+├── blog/                # Configuración principal
 │   ├── settings.py
 │   ├── urls.py
 │   └── wsgi.py
-├── templates/           # Templates HTML (login, signup, base, posts)
-├── static/              # Archivos estáticos (css, js, imágenes)
-├── posts/               # App principal de posts
-│   ├── models.py        # Modelos: Post, Comment, Review
+├── templates/           # HTML templates
+├── static/              # Archivos estáticos (CSS, JS, imágenes)
+├── posts/               # App principal
+│   ├── models.py        # Modelos: Post, Comment, Review, Reaction, Vote, Subscription, Notification
 │   ├── views.py         # Lógica de negocio
 │   ├── urls.py
 │   ├── forms.py
@@ -132,23 +155,70 @@ blog/
 └── requirements.txt
 
 
----
 
-## 👥 Autores
+🛠️ Flujo de desarrollo (GitKraken)
 
-Este proyecto fue desarrollado por el equipo *Los5Furiosos*:
+Se trabaja con ramas feature/<nombre> para cada funcionalidad.
 
-- *Carlos Miranda*  
-- *Eddie Man*  
-- *Eliecias Cubilla*  
-- *Harold Morales*  
-- *Brayan Quintero*
+Pull requests hacia develop, no directamente a main.
 
----
+Tablero Kanban: Backlog → In Progress → In Review → Done.
 
-## 📜 Licencia
+Cada PR debe incluir:
 
-Este proyecto es de uso educativo y académico.  
+Descripción clara de cambios.
+
+Checklist de pruebas.
+
+Capturas de pantalla si aplica.
+
+Pasos para reproducir.
+
+
+
+
+🛡️ Seguridad básica
+
+Uso de csrf_token en formularios.
+
+Validación de datos de usuario en modelos y formularios.
+
+Restricción de acciones sensibles a usuarios autenticados.
+
+Control de permisos en comentarios y notificaciones.
+
+Manejo de errores con códigos HTTP apropiados (403, 404, 429).
+
+
+
+
+👥 Autores
+
+Este proyecto fue desarrollado por el equipo Los5Furiosos:
+
+Carlos Miranda
+
+Eddie Man
+
+Eliecias Cubilla
+
+Harold Morales
+
+Brayan Quintero
+
+
+
+
+
+📜 Licencia
+
+Este proyecto es de uso educativo y académico.
 Puedes reutilizarlo y adaptarlo libremente siempre que cites a los autores originales.
 
+
+
+
 ---
+
+👉 Ya lo puedes copiar tal cual como `README.md` en tu repo.  
+¿Quieres que también te genere un **`requirements.txt` base** listo para este proyecto con Django + librerías (ckeditor, taggit, crispy, htmx, etc.) para que lo pegues directo en tu entorno `bloggame`?
