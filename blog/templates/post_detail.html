@@ -9,6 +9,7 @@
   <div class="post-meta">
     por 
     <a href="{% url 'blog:profile_detail' object.author.username %}" class="username">
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
       <strong>{{ object.author.username }}</strong>
     </a> 
     · {{ object.created|date:"d/m/Y g:i a" }}
@@ -41,24 +42,18 @@
   {% endif %}
 
   <!-- Contenido -->
-  <div class="mt-3">{{ object.content|safe }}</div>
+  <div class="mt-3">{{ object.content|safe }}
+  </div>
 
-  <!-- Botones de autor -->
-  {% if user == object.author %}
-    <a href="{% url 'blog:post_update' object.slug %}" class="btn btn-sm btn-primary mt-2">✏️ Editar</a>
-    <a href="{% url 'blog:post_delete' object.slug %}" class="btn btn-sm btn-danger mt-2">🗑️ Eliminar</a>
-  {% endif %}
 
-  <hr>
-
-  <!-- Formulario de reseña -->
+  <!-- Formulario de reseña principal -->
   <h4>Deja tu reseña</h4>
   {% if user.is_authenticated %}
     <form method="post" action="{% url 'blog:add_review' object.slug %}" class="mb-4">
       {% csrf_token %}
       <div class="mb-3">
         <label for="id_rating" class="form-label">Tu calificación (1 a 5)</label>
-        <select name="rating" id="id_rating" class="form-select" required>
+        <select name="rating" id="id_rating" class="form-select">
           <option value="">Selecciona...</option>
           <option value="1">⭐ 1 - Muy malo</option>
           <option value="2">⭐⭐ 2 - Malo</option>
@@ -67,12 +62,61 @@
           <option value="5">⭐⭐⭐⭐⭐ 5 - Excelente</option>
         </select>
       </div>
-      <div class="mb-3">
-        <label for="id_comment" class="form-label">Comentario</label>
-        <textarea name="comment" id="id_comment" rows="3" class="form-control"
-                  placeholder="Escribe tu opinión..."></textarea>
-      </div>
-      <button class="btn btn-success w-100">Enviar</button>
+      <!-- Reacciones: pega esto dentro de cada post-card -->
+<div class="reaction-bubble mt-3" data-post-id="{{ object.id }}">
+  <!-- Botón principal (corazón) -->
+  <button type="button" class="main-reaction" aria-label="Abrir reacciones">❤</button>
+
+  <!-- Opciones de reacción -->
+  <div class="reaction-options" aria-hidden="true">
+
+    <button type="button" class="reaction-btn"
+            data-type="like"
+            data-url="{% url 'blog:reaction_users' object.id 'like' %}">
+      <span class="emoji">👍</span>
+      <span class="counter" id="like-count-{{ object.id }}">{{ object.reaction_counts.like|default:0 }}</span>
+    </button>
+
+    <button type="button" class="reaction-btn"
+            data-type="love"
+            data-url="{% url 'blog:reaction_users' object.id 'love' %}">
+      <span class="emoji">❤</span>
+      <span class="counter" id="love-count-{{ object.id }}">{{ object.reaction_counts.love|default:0 }}</span>
+    </button>
+
+    <button type="button" class="reaction-btn"
+            data-type="funny"
+            data-url="{% url 'blog:reaction_users' object.id 'funny' %}">
+      <span class="emoji">😂</span>
+      <span class="counter" id="funny-count-{{ object.id }}">{{ object.reaction_counts.funny|default:0 }}</span>
+    </button>
+
+    <button type="button" class="reaction-btn"
+            data-type="wow"
+            data-url="{% url 'blog:reaction_users' object.id 'wow' %}">
+      <span class="emoji">😮</span>
+      <span class="counter" id="wow-count-{{ object.id }}">{{ object.reaction_counts.wow|default:0 }}</span>
+    </button>
+
+    <button type="button" class="reaction-btn"
+            data-type="sad"
+            data-url="{% url 'blog:reaction_users' object.id 'sad' %}">
+      <span class="emoji">😢</span>
+      <span class="counter" id="sad-count-{{ object.id }}">{{ object.reaction_counts.sad|default:0 }}</span>
+    </button>
+
+    <button type="button" class="reaction-btn"
+            data-type="angry"
+            data-url="{% url 'blog:reaction_users' object.id 'angry' %}">
+      <span class="emoji">😡</span>
+      <span class="counter" id="angry-count-{{ object.id }}">{{ object.reaction_counts.angry|default:0 }}</span>
+    </button>
+
+  </div>
+</div>
+      <textarea name="comment" rows="3" class="form-control mb-2"
+                placeholder="Escribe tu opinión..." required></textarea>
+      <button type="submit" class="btn btn-success w-100">Enviar</button>
     </form>
   {% else %}
     <p><a href="{% url 'blog:login' %}">Inicia sesión</a> para calificar y comentar.</p>
@@ -82,9 +126,9 @@
 
   <!-- Lista de reseñas -->
   <h4>Reseñas</h4>
-  <ul class="list-unstyled">
+  <ul id="reviews-list" class="list-unstyled">
     {% for r in reviews %}
-      <div class="review border rounded p-3 mb-3 d-flex align-items-start">
+      <div class="review border rounded p-3 mb-3 d-flex align-items-start" id="review-{{ r.id }}">
         <!-- Avatar -->
         <div class="me-3">
           {% if r.user.profile.avatar %}
@@ -97,21 +141,44 @@
         <!-- Contenido de la reseña -->
         <div class="flex-grow-1">
           <p class="mb-1">{{ r.comment }}</p>
-          <small class="rating">⭐ {{ r.rating }}/5</small><br>
+          {% if r.rating %}
+            <small class="rating">⭐ {{ r.rating }}/5</small><br>
+          {% endif %}
           <small class="post-meta">
             Por 
-            <a href="{% url 'blog:profile_detail' r.user.username %}" class="username">
+            <a href="{% url 'blog:profile_detail' r.user.username %}" class="username fw-bold">
               {{ r.user.username|default:"Anónimo" }}
             </a>
             – {{ r.created|date:"d/m/Y g:i A" }}
           </small>
 
-          <!-- Moderación de reseñas -->
+          <!-- Likes / Dislikes -->
+          <div class="mt-2 d-flex align-items-center gap-2">
+            {% if user.is_authenticated %}
+              <a href="{% url 'blog:vote_review' r.id 'like' %}" class="btn btn-sm btn-outline-success">
+                👍 {{ r.likes_count }}
+              </a>
+              <a href="{% url 'blog:vote_review' r.id 'dislike' %}" class="btn btn-sm btn-outline-danger">
+                👎 {{ r.dislikes_count }}
+              </a>
+            {% else %}
+              <small>(Inicia sesión para votar)</small>
+            {% endif %}
+          </div>
+
+          <!-- Botón Responder -->
+          {% if user.is_authenticated %}
+              <button type="button"
+                      class="reply-toggle btn-reply d-block mt-2"
+                      data-review="{{ r.id }}"
+                      data-username="{{ r.user.username }}">
+                Responder
+              </button>
+          {% endif %}
+
+          <!-- Moderación -->
           {% if is_owner %}
             <div class="mt-2">
-              <form method="post" action="{% url 'blog:moderate_review' r.id 'approve' %}" style="display:inline;">
-                {% csrf_token %}<button class="btn btn-sm btn-success">Aprobar</button>
-              </form>
               <form method="post" action="{% url 'blog:moderate_review' r.id 'hide' %}" style="display:inline;">
                 {% csrf_token %}<button class="btn btn-sm btn-warning">Ocultar</button>
               </form>
@@ -121,6 +188,79 @@
               <form method="post" action="{% url 'blog:moderate_review' r.id 'delete' %}" style="display:inline;">
                 {% csrf_token %}<button class="btn btn-sm btn-dark">Eliminar</button>
               </form>
+
+              <!-- 📌 Botón fijar/desfijar reseña -->
+              {% if not r.pinned %}
+                <form method="post" action="{% url 'blog:pin_review' r.id %}" style="display:inline;">
+
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-warning">📌 Fijar</button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'blog:unpin_review' r.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-secondary">❌ Desfijar</button>
+                </form>
+                <span class="badge bg-warning text-dark ms-2">📌 Fijada</span>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <!-- Botón Ver respuestas -->
+          {% if r.replies.count > 0 %}
+            <button type="button" 
+                    class="toggle-replies btn-reply mt-2"
+                    data-review="{{ r.id }}">
+              Ver {{ r.replies.count }} respuesta{{ r.replies.count|pluralize }}
+            </button>
+
+            <div class="replies-list ms-4 mt-2" id="replies-{{ r.id }}" style="display:none;">
+              {% for reply in r.replies.all %}
+                <div class="d-flex align-items-start mb-2 p-2 border-start">
+                  <!-- Avatar respuesta -->
+                  <div class="me-2">
+                    {% if reply.user.profile.avatar %}
+                      <img src="{{ reply.user.profile.avatar.url }}" alt="avatar" class="rounded-circle" width="32" height="32">
+                    {% else %}
+                      <img src="{% static 'img/default-avatar.png' %}" alt="avatar" class="rounded-circle" width="32" height="32">
+                    {% endif %}
+                  </div>
+                  <!-- Contenido respuesta -->
+                  <div>
+                    <p class="mb-1">{{ reply.comment }}</p>
+                    <small class="post-meta">
+                      Por 
+                      <a href="{% url 'blog:profile_detail' reply.user.username %}" class="username fw-bold">
+                        {{ reply.user.username|default:"Anónimo" }}
+                      </a>
+                       {{ reply.created|date:"d/m/Y g:i A" }}
+                    </small>
+
+                    <!-- Likes / Dislikes respuesta -->
+                    <div class="mt-1 d-flex align-items-center gap-2">
+                      {% if user.is_authenticated %}
+                        <a href="{% url 'blog:vote_review' reply.id 'like' %}" class="btn btn-sm btn-outline-success">
+                          👍 {{ reply.likes_count }}
+                        </a>
+                        <a href="{% url 'blog:vote_review' reply.id 'dislike' %}" class="btn btn-sm btn-outline-danger">
+                          👎 {{ reply.dislikes_count }}
+                        </a>
+                      {% else %}
+                        <small>(Inicia sesión para votar)</small>
+                      {% endif %}
+                    </div>
+
+                    {% if user.is_authenticated %}
+                      <button type="button"
+                              class="reply-toggle btn-reply ms-2"
+                              data-review="{{ r.id }}"
+                              data-username="{{ reply.user.username }}">
+                        Responder
+                      </button>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
             </div>
           {% endif %}
         </div>
@@ -132,39 +272,454 @@
 
   <hr>
 
-  <!-- Lista de comentarios -->
-  <h4>Comentarios</h4>
-  <ul class="list-unstyled">
-    {% for c in comments %}
-      <li class="comment border rounded p-2 mb-2">
-        <p class="mb-1">{{ c.text }}</p>
-        <small class="post-meta">
-          Por {{ c.author|default:"Anónimo" }} – {{ c.created|date:"d/m/Y g:i A" }}
-        </small>
-        <br>
-        <small class="badge text-bg-secondary">Estado: {{ c.get_status_display }}</small>
+ <hr>
 
-        <!-- Moderación de comentarios -->
-        {% if is_owner %}
-          <div class="mt-2">
-            <form method="post" action="{% url 'blog:moderate_comment' c.id 'approve' %}" style="display:inline;">
-              {% csrf_token %}<button class="btn btn-sm btn-success">Aprobar</button>
-            </form>
-            <form method="post" action="{% url 'blog:moderate_comment' c.id 'hide' %}" style="display:inline;">
-              {% csrf_token %}<button class="btn btn-sm btn-warning">Ocultar</button>
-            </form>
-            <form method="post" action="{% url 'blog:moderate_comment' c.id 'block' %}" style="display:inline;">
-              {% csrf_token %}<button class="btn btn-sm btn-danger">Bloquear</button>
-            </form>
-            <form method="post" action="{% url 'blog:moderate_comment' c.id 'delete' %}" style="display:inline;">
-              {% csrf_token %}<button class="btn btn-sm btn-dark">Eliminar</button>
-            </form>
-          </div>
-        {% endif %}
-      </li>
-    {% empty %}
-      <p class="post-meta">No hay comentarios aún.</p>
-    {% endfor %}
-  </ul>
+<h4></h4>
+
+<div class="reaction-options mt-3">
+
+  <button type="button" class="reaction-btn"
+          data-type="like"
+          data-url="{% url 'blog:reaction_users' object.id 'like' %}">
+    <span class="emoji">👍</span>
+    <span class="counter" id="like-count-{{ object.id }}">{{ reaction_counts.like }}</span>
+  </button>
+
+  <button type="button" class="reaction-btn"
+          data-type="love"
+          data-url="{% url 'blog:reaction_users' object.id 'love' %}">
+    <span class="emoji">❤</span>
+    <span class="counter" id="love-count-{{ object.id }}">{{ reaction_counts.love }}</span>
+  </button>
+
+  <button type="button" class="reaction-btn"
+          data-type="funny"
+          data-url="{% url 'blog:reaction_users' object.id 'funny' %}">
+    <span class="emoji">😂</span>
+    <span class="counter" id="funny-count-{{ object.id }}">{{ reaction_counts.funny }}</span>
+  </button>
+
+  <button type="button" class="reaction-btn"
+          data-type="wow"
+          data-url="{% url 'blog:reaction_users' object.id 'wow' %}">
+    <span class="emoji">😮</span>
+    <span class="counter" id="wow-count-{{ object.id }}">{{ reaction_counts.wow }}</span>
+  </button>
+
+  <button type="button" class="reaction-btn"
+          data-type="sad"
+          data-url="{% url 'blog:reaction_users' object.id 'sad' %}">
+    <span class="emoji">😢</span>
+    <span class="counter" id="sad-count-{{ object.id }}">{{ reaction_counts.sad }}</span>
+  </button>
+
+  <button type="button" class="reaction-btn"
+          data-type="angry"
+          data-url="{% url 'blog:reaction_users' object.id 'angry' %}">
+    <span class="emoji">😡</span>
+    <span class="counter" id="angry-count-{{ object.id }}">{{ reaction_counts.angry }}</span>
+  </button>
+</div>
+
+
+  <!-- Contenedor global de respuesta estilo YouTube -->
+  <div id="reply-box" class="reply-box" style="display:none; width:100%; margin-top:10px;">
+    <div class="reply-header mb-1">
+      Respondiendo a <span id="reply-username" class="fw-bold text-primary"></span>
+    </div>
+    <form method="post" action="{% url 'blog:add_review' object.slug %}">
+      {% csrf_token %}
+      <input type="hidden" name="parent_id" id="reply-parent-id">
+      <textarea id="reply-textarea" name="comment" rows="3" 
+                class="form-control mb-2"
+                style="width:100%; resize: vertical;"
+                placeholder="Escribe tu respuesta..." required></textarea>
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" id="cancel-reply" class="btn btn-sm btn-secondary">Cancelar</button>
+        <button type="submit" class="btn btn-sm btn-success">Responder</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Script -->
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const replyBox = document.getElementById("reply-box");
+    const replyUsername = document.getElementById("reply-username");
+    const replyTextarea = document.getElementById("reply-textarea");
+    const replyParent = document.getElementById("reply-parent-id");
+    const cancelBtn = document.getElementById("cancel-reply");
+
+    // Toggle respuestas
+    document.querySelectorAll(".toggle-replies").forEach(btn => {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        const reviewId = this.dataset.review;
+        const repliesDiv = document.getElementById("replies-" + reviewId);
+        if (!repliesDiv) return;
+
+        if (repliesDiv.style.display === "none" || repliesDiv.style.display === "") {
+          repliesDiv.style.display = "block";
+          this.textContent = "Ocultar respuestas";
+        } else {
+          repliesDiv.style.display = "none";
+          const count = repliesDiv.children.length;
+          this.textContent = `Ver ${count} respuesta${count > 1 ? "s" : ""}`;
+        }
+      });
+    });
+
+    // Responder
+    document.querySelectorAll(".reply-toggle").forEach(btn => {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+
+        const username = this.dataset.username;
+        const reviewId = this.dataset.review;
+
+        replyUsername.textContent = "@" + username;
+        replyParent.value = reviewId;
+
+        const reviewDiv = document.getElementById("review-" + reviewId);
+        reviewDiv.appendChild(replyBox);
+
+        replyBox.style.display = "block";
+        replyTextarea.focus();
+      });
+    });
+
+    // Cancelar
+    cancelBtn.addEventListener("click", function() {
+      replyBox.style.display = "none";
+      replyTextarea.value = "";
+      replyParent.value = "";
+      replyUsername.textContent = "";
+    });
+  });
+  </script>
+
+<script>
+(function () {
+  // helper CSRF
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let c of cookies) {
+        c = c.trim();
+        if (c.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(c.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie("csrftoken");
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const containers = document.querySelectorAll(".reaction-bubble");
+    console.log("reactions script loaded — containers found:", containers.length);
+
+    // global click to close any open bubble when clicking outside
+    document.addEventListener("click", function (ev) {
+      // close any that don't contain the click target
+      document.querySelectorAll(".reaction-bubble.open").forEach(openContainer => {
+        if (!openContainer.contains(ev.target)) {
+          openContainer.classList.remove("open");
+          const opts = openContainer.querySelector(".reaction-options");
+          if (opts) opts.setAttribute("aria-hidden", "true");
+        }
+      });
+    });
+
+    containers.forEach(container => {
+      try {
+        // asegurar que data-post-id existe
+        const postId = container.dataset.postId || container.getAttribute("data-post-id") || null;
+
+        // buscar / crear main button si hace falta
+        let mainBtn = container.querySelector(".main-reaction");
+        if (!mainBtn) {
+          mainBtn = document.createElement("button");
+          mainBtn.className = "main-reaction";
+          mainBtn.setAttribute("aria-label", "Abrir reacciones");
+          mainBtn.innerHTML = "❤";
+          // Insertar al principio del contenedor para que sea visible
+          container.insertBefore(mainBtn, container.firstChild);
+          console.log("main-reaction creado para post:", postId);
+        }
+
+        // buscar opciones (puede ser que falten si el HTML no las incluyó)
+        let options = container.querySelector(".reaction-options");
+        if (!options) {
+          // crear contenedor vacío para evitar errores (no agrega botones)
+          options = document.createElement("div");
+          options.className = "reaction-options";
+          options.setAttribute("aria-hidden", "true");
+          container.appendChild(options);
+          console.log("reaction-options creado vacío para post:", postId);
+        }
+
+        // funciones de open/close/toggle
+        function openBubble() { container.classList.add("open"); options.setAttribute('aria-hidden', 'false'); }
+        function closeBubble() { container.classList.remove("open"); options.setAttribute('aria-hidden', 'true'); }
+        function toggleBubble() { 
+          const opening = !container.classList.contains('open');
+          container.classList.toggle("open");
+          options.setAttribute('aria-hidden', opening ? 'false' : 'true');
+        }
+
+        // handlers para abrir/cerrar
+        mainBtn.addEventListener("click", function (e) { e.stopPropagation(); toggleBubble(); });
+        mainBtn.addEventListener("touchstart", function (e) { if (!container.classList.contains("open")) openBubble(); }, {passive: true});
+
+        // Cerrar con ESC sólo para este contenedor
+        document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeBubble(); });
+
+        // Si hay botones de reacción dentro, enlazarlos; si no, nos saltamos
+        const reactionButtons = options.querySelectorAll(".reaction-btn");
+        if (reactionButtons.length === 0) {
+          // no hay botones (tal vez el template no los generó). No es error crítico.
+          return;
+        }
+
+        reactionButtons.forEach(btn => {
+          btn.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            const type = btn.dataset.type;
+            if (!type) return;
+
+            // actualizar contador local (optimista)
+            const span = container.querySelector(`#${type}-count-${postId}`);
+            if (span) {
+              const current = parseInt(span.textContent || "0", 10);
+              span.textContent = current + 1;
+            }
+            options.querySelectorAll(".reaction-btn").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+
+            // POST al backend
+            fetch("/api/react/", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken,
+              },
+              body: JSON.stringify({ post: postId, type: type })
+            })
+            .then(res => {
+              if (!res.ok) throw new Error("Network response was not ok: " + res.status);
+              return res.json();
+            })
+            .then(data => {
+              if (data.counts) {
+                for (const k in data.counts) {
+                  const s = container.querySelector(`#${k}-count-${postId}`);
+                  if (s) s.textContent = data.counts[k];
+                }
+              }
+            })
+            .catch(err => {
+              console.error("Error al enviar reacción:", err);
+              // revertir la suma optimista si ocurrió
+              if (span) {
+                const current = parseInt(span.textContent || "0", 10);
+                span.textContent = Math.max(0, current - 1);
+              }
+            })
+            .finally(() => setTimeout(closeBubble, 120));
+          });
+
+          btn.addEventListener("touchstart", function () { btn.classList.add("selected"); }, {passive: true});
+        });
+
+      } catch (err) {
+        console.error("Error en reaction-bubble para contenedor:", container, err);
+        // no re-lanzamos el error: así el resto de contenedores sigue funcionando
+      }
+    }); // forEach container
+  }); // DOMContentLoaded
+})();
+</script>
+
+  <!-- Modal para mostrar usuarios que reaccionaron -->
+<div class="modal fade" id="reactionUsersModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Usuarios que reaccionaron</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="reaction-users-list" class="list-group"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--- Script para cargar usuarios que reaccionaron -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const buttons = document.querySelectorAll(".reaction-btn");
+  const usersList = document.getElementById("reaction-users-list");
+  const modal = new bootstrap.Modal(document.getElementById("reactionUsersModal"));
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", function() {
+      const url = this.dataset.url;
+      usersList.innerHTML = "<li class='list-group-item'>Cargando...</li>";
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          usersList.innerHTML = "";
+          if (data.users.length > 0) {
+            data.users.forEach(user => {
+              usersList.innerHTML += <li class="list-group-item">${user}</li>;
+            });
+          } else {
+            usersList.innerHTML = "<li class='list-group-item'>Nadie ha reaccionado aún.</li>";
+          }
+          modal.show();
+        })
+        .catch(() => {
+          usersList.innerHTML = "<li class='list-group-item text-danger'>Error cargando usuarios</li>";
+          modal.show();
+        });
+    });
+  });
+});
+</script>
+
+  <!-- Modal para mostrar usuarios que reaccionaron -->
+<div class="modal fade" id="reactionUsersModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Usuarios que reaccionaron</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <ul id="reaction-users-list" class="list-group"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!--- Script para cargar usuarios que reaccionaron -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const buttons = document.querySelectorAll(".reaction-btn");
+  const usersList = document.getElementById("reaction-users-list");
+  const modal = new bootstrap.Modal(document.getElementById("reactionUsersModal"));
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", function() {
+      const url = this.dataset.url;
+      usersList.innerHTML = "<li class='list-group-item'>Cargando...</li>";
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          usersList.innerHTML = "";
+          if (data.users.length > 0) {
+            data.users.forEach(user => {
+              usersList.innerHTML += <li class="list-group-item">${user}</li>;
+            });
+          } else {
+            usersList.innerHTML = "<li class='list-group-item'>Nadie ha reaccionado aún.</li>";
+          }
+          modal.show();
+        })
+        .catch(() => {
+          usersList.innerHTML = "<li class='list-group-item text-danger'>Error cargando usuarios</li>";
+          modal.show();
+        });
+    });
+  });
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const buttons = document.querySelectorAll(".reaction-btn");
+  const usersList = document.getElementById("reaction-users-list");
+  const modal = new bootstrap.Modal(document.getElementById("reactionUsersModal"));
+
+  // helper CSRF
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let c of cookies) {
+        c = c.trim();
+        if (c.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(c.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie("csrftoken");
+
+  buttons.forEach(btn => {
+    const postId = "{{ object.id }}";
+    const type = btn.dataset.type;
+
+    // 👉 CLICK IZQUIERDO: reaccionar
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      fetch("{% url 'blog:react_api' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken,
+        },
+        body: JSON.stringify({ post: postId, type: type })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.counts) {
+          for (const k in data.counts) {
+            const span = document.getElementById(`${k}-count-${postId}`);
+            if (span) span.textContent = data.counts[k];
+          }
+        }
+      });
+    });
+
+    // 👉 CLICK DERECHO: abrir modal con lista de usuarios
+    btn.addEventListener("contextmenu", function(e) {
+      e.preventDefault();
+      const url = btn.dataset.url;
+      usersList.innerHTML = "<li class='list-group-item'>Cargando...</li>";
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          usersList.innerHTML = "";
+          if (data.users.length > 0) {
+            data.users.forEach(user => {
+              usersList.innerHTML += `
+                <li class="list-group-item">
+                  <a href="/perfil/${user}" class="fw-bold">@${user}</a>
+                </li>`;
+            });
+          } else {
+            usersList.innerHTML = "<li class='list-group-item'>Nadie ha reaccionado aún.</li>";
+          }
+          modal.show();
+        })
+        .catch(() => {
+          usersList.innerHTML = "<li class='list-group-item text-danger'>Error cargando usuarios</li>";
+          modal.show();
+        });
+    });
+  });
+});
+</script>
+
+
 </article>
 {% endblock %}

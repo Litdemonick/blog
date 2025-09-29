@@ -5,11 +5,13 @@ from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from ckeditor_uploader.fields import RichTextUploadingField
 from taggit.managers import TaggableManager
+from django.utils import timezone
 
 
 # ----------------------------
 # Perfil de usuario
 # ----------------------------
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
@@ -44,6 +46,7 @@ class Profile(models.Model):
 # ----------------------------
 # Post (noticia o rumor)
 # ----------------------------
+
 class Post(models.Model):
     STATUS_CHOICES = (
         ('draft', 'Borrador'),
@@ -104,6 +107,7 @@ class Post(models.Model):
 # ----------------------------
 # Comentarios (moderados por autor del post)
 # ----------------------------
+
 class Comment(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pendiente"),
@@ -116,20 +120,72 @@ class Comment(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="comments"
     )
-    text = models.TextField()
+    text = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created = models.DateTimeField(auto_now_add=True)
+    
+    is_reaction = models.BooleanField(default=True)
+
+    # 🔹 Nuevo: relación para respuestas
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="replies"
+    )
+
+    # 🔹 Nuevo: moderador puede fijar comentarios
+    pinned = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ["-created"]
+        ordering = ["-pinned", "-created"]  # 👈 fijados arriba, luego por fecha
+
 
     def __str__(self):
         return f"Comentario de {self.author} en {self.post}"
+
+    @property
+    def score(self):
+        upvotes = self.votes.filter(value=1).count()
+        downvotes = self.votes.filter(value=-1).count()
+        return upvotes - downvotes
+
+    @property
+    def likes_count(self):
+        return self.votes.filter(value=1).count()
+
+    @property
+    def dislikes_count(self):
+        return self.votes.filter(value=-1).count()
+
+
+# ----------------------------
+# Votos en comentarios
+# ----------------------------
+
+class CommentVote(models.Model):
+    VOTE_CHOICES = (
+        (1, 'Upvote'),
+        (-1, 'Downvote'),
+        (0, 'Neutral'),
+    )
+
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name="votes")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comment_votes")
+    value = models.SmallIntegerField(choices=VOTE_CHOICES, default=0)
+
+    class Meta:
+        unique_together = ("comment", "user")
+
+    def __str__(self):
+        return f"{self.user.username} votó {self.value} en comentario {self.comment.id}"
 
 
 # ----------------------------
 # Reseñas (con rating y moderación)
 # ----------------------------
+
 class Review(models.Model):
     STATUS_CHOICES = [
         ("pending", "Pendiente"),
@@ -140,21 +196,22 @@ class Review(models.Model):
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='reviews')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
     rating = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(1), MaxValueValidator(5)]
-    )
+    
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        null=True, blank=True
+    )  # ⭐ Puede ser vacío si es solo respuesta
     comment = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created = models.DateTimeField(auto_now_add=True)
+    pinned = models.BooleanField(default=False) 
 
     class Meta:
         ordering = ['-created']
-        constraints = [
-            models.UniqueConstraint(fields=['post', 'user'], name='uniq_review_per_user_post')
-        ]
 
     def __str__(self):
-        return f"{self.user} – {self.rating}★ – {self.get_status_display()}"
+        return f"{self.user} – {self.comment[:30]}"
 
     @property
     def likes_count(self):
@@ -164,23 +221,11 @@ class Review(models.Model):
     def dislikes_count(self):
         return self.votes.filter(vote="dislike").count()
 
-    
-class PostBlock(models.Model):
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="blocks")
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_in_posts")
-    created = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("post", "user")
-
-    def __str__(self):
-        return f"{self.user} bloqueado en {self.post}"
-
-
 
 # ----------------------------
 # Votos en reseñas (like / dislike)
 # ----------------------------
+
 class ReviewVote(models.Model):
     VOTE_CHOICES = (
         ('like', '👍'),
@@ -196,3 +241,96 @@ class ReviewVote(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.vote} en {self.review}"
+
+
+# ----------------------------
+# Bloqueo de notificaciones entre usuarios
+# ----------------------------
+
+class NotificationBlock(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_notifications")
+    blocked_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="muted_by")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("blocker", "blocked_user")
+
+    def __str__(self):
+        return f"{self.blocker.username} bloqueó notificaciones de {self.blocked_user.username}"
+
+
+# ----------------------------
+# Bloqueo de usuarios en posts
+# ----------------------------
+
+class PostBlock(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="blocks")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="blocked_in_posts")
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("post", "user")
+
+    def __str__(self):
+        return f"{self.user} bloqueado en {self.post}"
+
+
+# ----------------------------
+# Notificaciones
+# ----------------------------
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")  # El que recibe
+    actor = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_notifications")  # El que actúa
+    verb = models.CharField(max_length=255)  # Ej: "comentó tu post"
+
+    target_post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
+    target_review = models.ForeignKey(Review, on_delete=models.CASCADE, null=True, blank=True)
+    target_comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.actor} {self.verb} → {self.user}"
+
+    def get_absolute_url(self):
+        """Redirige según el target disponible."""
+        if self.target_comment:
+            return self.target_comment.post.get_absolute_url() + f"#comment-{self.target_comment.id}"
+        elif self.target_review:
+            return self.target_review.post.get_absolute_url() + f"#review-{self.target_review.id}"
+        elif self.target_post:
+            return self.target_post.get_absolute_url()
+        return "#"
+
+
+# ----------------------------
+# Reacciones (emojis) en posts
+# ----------------------------
+# Opciones de reacciones (emojis)
+REACTION_CHOICES = [
+    ('like', '👍'),
+    ('love', ''),
+    ('funny', '😂'),
+    ('wow', '😮'),
+    ('sad', '😢'),
+    ('angry', '😡'),
+]
+class Reaction(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="reactions")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reactions")
+    type = models.CharField(max_length=10, choices=REACTION_CHOICES)
+    rating = models.IntegerField(null=True, blank=True)   # 👈 opcional
+    opinion = models.TextField(null=True, blank=True)  # 👈 opcional
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("post", "user")  # 👈 un usuario solo puede reaccionar una vez a un post
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} reaccionó {self.type} a {self.post}"

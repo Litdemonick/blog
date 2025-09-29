@@ -57,6 +57,7 @@
             ⭐ Promedio: {{ p.average_rating|default:"Sin calificaciones aún" }}
           </span>
 
+          
 
             {% for t in p.tags.all %}
               <a href="{% url 'blog:post_by_tag' t.slug %}" class="badge bg-dark border border-secondary text-uppercase small">

@@ -1,0 +1,14 @@
+{
+    "terminal.integrated.profiles.windows": {
+        "PowerShell (bloggames)": {
+            "path": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+            "args": [
+                "-NoExit",
+                "-Command",
+                "conda activate bloggames"
+            ],
+            "icon": "terminal-powershell"
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell (bloggames)"
+}
