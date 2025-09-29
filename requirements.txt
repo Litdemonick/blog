@@ -9,6 +9,8 @@ gunicorn>=21.2.0
 tzdata>=2023.3
 djangorestframework
 pytest
+dj-database-url
+psycopg2-binary
 django-taggit>=5.0.1
 gunicorn
 django-ckeditor-5

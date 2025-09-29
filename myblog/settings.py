@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import dj_database_url   # 👈 para leer DATABASE_URL de Railway
 
 # --- Rutas base ---
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,13 +42,11 @@ INSTALLED_APPS = [
     'ckeditor',              # Editor
     'ckeditor_uploader',     # Subida de archivos/imagenes desde CKEditor
     'taggit',                # Tags
+    'rest_framework',
+    "widget_tweaks",
 
     # Apps locales
     'blog.apps.BlogConfig',
-    
-
-    'rest_framework',
-    "widget_tweaks",
 ]
 
 # --- Middleware (orden importante) ---
@@ -78,7 +77,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'blog.context_processors.global_tags',
 
                 # 🔥 nuestros processors
                 "blog.context_processors.global_tags",
@@ -89,13 +87,24 @@ TEMPLATES = [
     },
 ]
 
-# --- Base de datos (SQLite para desarrollo) ---
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# --- Base de datos ---
+if os.environ.get("DATABASE_URL"):  
+    # En Railway → usar Postgres
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=os.environ["DATABASE_URL"],
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-}
+else:
+    # En local → usar SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # --- Validadores de contraseña ---
 AUTH_PASSWORD_VALIDATORS = [
