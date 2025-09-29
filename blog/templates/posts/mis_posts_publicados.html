@@ -13,7 +13,6 @@
                         data-url="{% url 'blog:post_detail' post.slug %}"
                         style="cursor: pointer;">
 
-
                         <!-- Imagen -->
                         {% if post.cover %}
                             <img src="{{ post.cover.url }}" class="card-img-top" 
@@ -44,22 +43,17 @@
                         </div>
 
                         <!-- Acciones -->
-                        <div class="card-footer d-flex justify-content-between">
+                        <div class="card-footer d-flex justify-content-center gap-3">
                             <a href="{% url 'blog:toggle_visibility' post.id %}"
                                class="btn {% if post.is_visible %}btn-warning{% else %}btn-success{% endif %} btn-sm"
                                onclick="event.stopPropagation(); return confirm('{% if post.is_visible %}¿Seguro que quieres ocultar este post? Nadie lo verá.{% else %}¿Quieres poner este post visible otra vez?{% endif %}');">
                                 {% if post.is_visible %}👁️ Ocultar{% else %}✅ Visible{% endif %}
                             </a>
 
-                            <a href="{% url 'blog:post_update' post.slug %}"
-                               class="btn btn-info btn-sm"
+                            <a href="#" class="btn btn-danger btn-sm delete-post-btn"
+                               data-slug="{{ post.slug }}"
                                onclick="event.stopPropagation();">
-                                ✏️ Editar
-                            </a>
-                              <a href="#" class="btn btn-danger btn-sm delete-post-btn"
-                            data-slug="{{ post.slug }}"
-                            onclick="event.stopPropagation();">
-                            🗑️ Eliminar
+                               🗑️ Eliminar
                             </a>
                         </div>
                     </div>
@@ -68,38 +62,33 @@
         </div>
 
        <!-- 🔹 Paginación -->
-            {% if posts.has_other_pages %}
-                <nav aria-label="Page navigation" class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        {% if posts.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link bg-dark text-light border-0" href="?page={{ posts.previous_page_number }}">
-                                    ⬅️
-                                </a>
-                            </li>
-                        {% endif %}
-
-                        <li class="page-item disabled">
-                            <span class="page-link bg-dark text-light border-0">
-                                Página {{ posts.number }} de {{ posts.paginator.num_pages }}
-                            </span>
+        {% if posts.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if posts.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link bg-dark text-light border-0" href="?page={{ posts.previous_page_number }}">
+                                ⬅️
+                            </a>
                         </li>
+                    {% endif %}
 
-                        {% if posts.has_next %}
-                            <li class="page-item">
-                                <a class="page-link bg-dark text-light border-0" href="?page={{ posts.next_page_number }}">
-                                    ➡️
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
+                    <li class="page-item disabled">
+                        <span class="page-link bg-dark text-light border-0">
+                            Página {{ posts.number }} de {{ posts.paginator.num_pages }}
+                        </span>
+                    </li>
 
-
-            </ul>
-        </nav>
-
+                    {% if posts.has_next %}
+                        <li class="page-item">
+                            <a class="page-link bg-dark text-light border-0" href="?page={{ posts.next_page_number }}">
+                                ➡️
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
     {% else %}
         <div class="alert alert-dark text-center border-0 rounded-3 text-light">
             No tienes posts publicados todavía.
@@ -141,22 +130,23 @@
         color: #fff;
         font-weight: 600;
     }
-    .btn-info {
-        background: linear-gradient(90deg, #00c6ff, #0072ff);
-        border: none;
-        color: #fff;
-        font-weight: 600;
-    }
 </style>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+  // 🔹 Hacer que toda la card sea clickeable (menos los botones)
+  document.querySelectorAll(".post-card").forEach(card => {
+    card.addEventListener("click", function () {
+      window.location.href = this.dataset.url;
+    });
+  });
+
+  // 🔹 Manejar botón eliminar con fetch
   document.querySelectorAll(".delete-post-btn").forEach(btn => {
     btn.addEventListener("click", function (e) {
       e.preventDefault();
 
-      // 🚨 Confirmación primero
       if (!confirm("⚠️ Esta acción eliminará el post permanentemente. ¿Estás seguro?")) {
-        return; // si cancela, no pasa nada
+        return;
       }
 
       const slug = this.dataset.slug;
@@ -164,12 +154,11 @@ document.addEventListener("DOMContentLoaded", () => {
       fetch(`/post/${slug}/delete/`, {
         method: "POST",
         headers: {
-          "X-CSRFToken": "{{ csrf_token }}",  // asegúrate de pasar CSRF
+          "X-CSRFToken": "{{ csrf_token }}",
         },
       })
       .then(res => {
         if (res.ok) {
-          // Quitar el post de la lista
           this.closest(".col-md-6").remove();
         } else {
           alert("⚠️ No se pudo eliminar el post.");
@@ -179,6 +168,5 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
-
 
 {% endblock %}

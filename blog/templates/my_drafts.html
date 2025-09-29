@@ -4,21 +4,44 @@
   <h2 class="mb-4 text-warning">📂 Mis Posts en Borrador</h2>
 
   {% if drafts %}
-    <!-- Contenedor scroll para los borradores -->
+    <!-- Contenedor con scroll -->
     <div class="drafts-container p-3">
-      {% for p in drafts %}
-        <div class="card draft-card bg-dark border-secondary mb-3">
-          <div class="card-body">
-            <h4 class="card-title">
-              <a href="{% url 'blog:post_edit' p.slug %}" class="text-warning text-decoration-none">
-                ✏️ {{ p.title }}
-              </a>
-            </h4>
-            <p class="text-muted mb-1">Creado: {{ p.created|date:"d/m/Y g:i a" }}</p>
-            <p class="text-light">{{ p.excerpt|default:"(Sin resumen)" }}</p>
+      <div class="row g-3">
+        {% for p in drafts %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card draft-card bg-dark border-secondary h-100 shadow-sm">
+              
+              <!-- Imagen de portada -->
+              {% if p.cover %}
+                <img src="{{ p.cover.url }}" class="card-img-top" 
+                     alt="Portada de {{ p.title }}"
+                     style="height:160px; object-fit:cover; border-radius:10px 10px 0 0;">
+              {% else %}
+                <div class="d-flex align-items-center justify-content-center bg-secondary"
+                     style="height:160px; border-radius:10px 10px 0 0; color:#bbb;">
+                  📷 Sin imagen
+                </div>
+              {% endif %}
+
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-warning text-truncate" title="{{ p.title }}">
+                  {{ p.title }}
+                </h5>
+                <p class="text-muted mb-1" style="font-size:0.85rem;">📅 {{ p.created|date:"d/m/Y g:i a" }}</p>
+                <p class="card-text text-light text-truncate" style="max-height:40px; font-size:0.9rem;">
+                  {{ p.excerpt|default:"(Sin resumen)" }}
+                </p>
+                <div class="mt-auto">
+                  <a href="{% url 'blog:post_edit' p.slug %}" 
+                     class="btn btn-sm btn-warning w-100 fw-bold">
+                    ✏️ Editar
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
     </div>
   {% else %}
     <div class="alert alert-secondary">No tienes posts en borrador.</div>
@@ -28,45 +51,38 @@
 <style>
 /* 🔹 Contenedor con scroll */
 .drafts-container {
-  max-height: 500px;           /* altura máxima antes de scroll */
-  overflow-y: auto;            /* scroll vertical */
-  padding: 15px;               /* más espacio interno */
-  border: 1px solid #333;      /* borde envolvente */
-  border-radius: 12px;         /* bordes redondeados */
-  background: #1a1a1a;         /* fondo oscuro */
+  max-height: 600px;             /* altura máxima antes de scroll */
+  overflow-y: auto;              /* scroll vertical */
+  border: 1px solid #333;
+  border-radius: 12px;
+  background: #1a1a1a;
   box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 
-/* 🔹 Tarjeta de borrador */
+/* 🔹 Tarjeta */
 .draft-card {
+  border-radius: 12px;
   transition: transform 0.2s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-  border-radius: 10px;
-  margin: 10px 5px;            /* separación entre tarjetas */
 }
-
-/* 🔹 Efecto hover "alumbra bonito" */
 .draft-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-5px);
   border-color: #ff3c00;
   box-shadow: 0 0 18px rgba(255, 60, 0, 0.6);
   background: #222 !important;
 }
 
-/* 🔹 Scroll estético */
+/* 🔹 Scroll estilizado */
 .drafts-container::-webkit-scrollbar {
   width: 10px;
 }
-
 .drafts-container::-webkit-scrollbar-track {
   background: #111;
   border-radius: 10px;
 }
-
 .drafts-container::-webkit-scrollbar-thumb {
   background: #ff3c00;
   border-radius: 10px;
 }
-
 .drafts-container::-webkit-scrollbar-thumb:hover {
   background: #ff5722;
 }
