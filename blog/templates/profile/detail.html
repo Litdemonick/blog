@@ -3,46 +3,172 @@
 
 {% block content %}
 <div class="container mt-5" style="max-width: 700px;">
-  <div class="card shadow-sm p-4 rounded-3">
+  <div class="profile-card p-4 mx-auto">
     <div class="text-center">
-      <h2 class="mb-4">Perfil de {{ profile_user.username }}</h2>
+      <h2 class="mb-4 text-gamer">Perfil de {{ profile_user.username }}</h2>
 
       {% if profile_user.profile.avatar %}
         <img src="{{ profile_user.profile.avatar.url }}" width="140" height="140" 
-             class="rounded-circle mb-3 border border-3 shadow-sm"
+             class="profile-avatar mb-3"
              alt="Avatar de {{ profile_user.username }}">
       {% else %}
         <img src="{% static 'img/default-avatar.png' %}" width="140" height="140"
-             class="rounded-circle mb-3 border border-3 shadow-sm"
+             class="profile-avatar mb-3"
              alt="Avatar por defecto">
       {% endif %}
     </div>
 
-    <hr>
+    <hr class="border-secondary">
 
     <div class="row">
       <div class="col-md-6 mb-3">
-        <p><strong>👤 Usuario:</strong> {{ profile_user.username }}</p>
-        <p><strong>📧 Email:</strong> {{ profile_user.email }}</p>
+        <p><span class="info-label">👤 Usuario:</span> <span class="info-value">{{ profile_user.username }}</span></p>
+        <p><span class="info-label">📧 Email:</span> <span class="info-value">{{ profile_user.email }}</span></p>
       </div>
       <div class="col-md-6 mb-3">
-        <p><strong>🆔 Nombre completo:</strong> {{ profile_user.profile.name|default:"No registrado" }}</p>
-        <p><strong>📱 Teléfono:</strong> {{ profile_user.profile.phone|default:"No registrado" }}</p>
-        <p><strong>🌍 Ubicación:</strong> {{ profile_user.profile.location|default:"No especificada" }}</p>
+        <p><span class="info-label">🆔 Nombre completo:</span> <span class="info-value">{{ profile_user.profile.name|default:"No registrado" }}</span></p>
+        <p><span class="info-label">📱 Teléfono:</span> <span class="info-value">{{ profile_user.profile.phone|default:"No registrado" }}</span></p>
+        <p><span class="info-label">🌍 Ubicación:</span> <span class="info-value">{{ profile_user.profile.location|default:"No especificada" }}</span></p>
       </div>
     </div>
 
-    <p><strong>📝 Bio:</strong></p>
-    <p class="bg-light p-3 rounded text-dark">{{ profile_user.profile.bio|default:"(sin bio)" }}</p>
+    <p class="info-label">📝 Bio:</p>
+    <p class="info-box">{{ profile_user.profile.bio|default:"(sin bio)" }}</p>
 
-    <p><strong>🎯 Intereses:</strong></p>
-    <p class="bg-light p-3 rounded text-dark">{{ profile_user.profile.interests|default:"(sin intereses)" }}</p>
+    <p class="info-label">🎯 Intereses:</p>
+    <p class="info-box">{{ profile_user.profile.interests|default:"(sin intereses)" }}</p>
 
     {% if profile_user == user %}
       <div class="text-center mt-4">
-        <a href="{% url 'blog:profile_edit' %}" class="btn btn-primary px-4">✏️ Editar perfil</a>
+        <a href="{% url 'blog:profile_edit' %}" class="btn-edit">✏️ Editar perfil</a>
       </div>
+    {% endif %}
+
+    <!-- 🔹 Sección de posts del usuario -->
+    <hr class="border-secondary mt-5">
+    <h4 class="text-center text-gamer">📝 Posts de {{ profile_user.username }}</h4>
+
+    {% if user_posts %}
+      <div class="user-posts-scroll mt-3">
+        {% for post in user_posts %}
+          <a href="{{ post.get_absolute_url }}" class="user-post-card">
+            <h5 class="post-title">{{ post.title }}</h5>
+            <small class="post-date">📅 {{ post.created|date:"d/m/Y h:i A" }}</small>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted text-center">(Este usuario no ha publicado posts aún)</p>
     {% endif %}
   </div>
 </div>
+
+<style>
+/* === PERFIL DARK GAMER === */
+.profile-card {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 12px;
+  color: #ddd;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+}
+
+.text-gamer {
+  color: #ff3c00;
+  font-weight: 700;
+}
+
+.profile-avatar {
+  background: #2a2a2a;
+  border: 3px solid #444;
+  border-radius: 50%;
+  padding: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.info-label {
+  color: #ffb300;
+  font-weight: 600;
+}
+
+.info-value {
+  color: #ccc;
+}
+
+.info-box {
+  background: #2a2a2a;
+  color: #ddd;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+
+.btn-edit {
+  background: #ff3c00;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  transition: 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-edit:hover {
+  background: #e63600;
+  transform: scale(1.05);
+}
+
+/* === POSTS DEL USUARIO === */
+.user-posts-scroll {
+  max-height: 200px;         /* 🔹 ajustado para que a los 3 posts aparezca */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 5px 15px 5px 5px; /* 🔹 más espacio a la derecha */
+  box-sizing: border-box;
+  scrollbar-gutter: stable;  /* 🔹 reserva espacio para el scroll */
+}
+
+
+
+.user-post-card {
+  display: block;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  color: #ddd;
+  text-decoration: none;
+  transition: 0.25s;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.user-post-card:hover {
+  background: #333;
+  outline: 2px solid #ff3c00;   /* ✅ borde exterior en hover */
+  outline-offset: 0px;          /* lo mantiene alineado */
+  box-shadow: 0 4px 12px rgba(255, 60, 0, 0.4);
+  transform: scale(1.01);       /* 🔹 menos agresivo */
+  z-index: 2;
+}
+
+.post-title {
+  font-size: 1.1rem;
+  color: #ffb300;
+  font-weight: 600;
+  margin: 0;
+}
+
+.post-date {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+
+
+</style>
 {% endblock %}

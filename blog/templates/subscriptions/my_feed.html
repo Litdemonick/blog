@@ -3,11 +3,11 @@
 {% block title %}Mi feed{% endblock %}
 
 {% block content %}
-<h2 class="mb-3">Mi feed</h2>
+<h2 class="mb-3 text-gamer">Mi feed</h2>
 
 {% if posts %}
   {% for p in posts %}
-    <div class="card bg-dark border-secondary mb-3">
+    <div class="card bg-dark border-secondary mb-3 post-card-gamer">
       <div class="card-body">
         <h4 class="card-title">
           <a class="text-warning text-decoration-none" href="{{ p.get_absolute_url }}">{{ p.title }}</a>
@@ -39,11 +39,11 @@
     </div>
   {% endfor %}
 {% else %}
-  <div class="alert alert-secondary">
+  <div class="alert alert-gamer">
     Todavía no hay contenido en tu feed.
-    <div class="mt-2">
+    <div class="mt-3">
       <a class="btn btn-sm btn-primary" href="{% url 'blog:post_list' %}">Explorar posts</a>
-      <a class="btn btn-sm btn-dark" href="{% url 'blog:my_subscriptions' %}">Gestionar suscripciones</a>
+      <a class="btn btn-sm btn-outline-light" href="{% url 'blog:my_subscriptions' %}">Gestionar suscripciones</a>
     </div>
   </div>
 {% endif %}

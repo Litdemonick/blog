@@ -80,8 +80,9 @@ TEMPLATES = [
                 'blog.context_processors.global_tags',
 
                 # 🔥 nuestros processors
-                "blog.context_processors.unread_notifications",
                 "blog.context_processors.global_tags",
+                "blog.context_processors.unread_notifications",
+                "blog.context_processors.latest_notifications",
             ],
         },
     },

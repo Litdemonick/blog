@@ -61,7 +61,14 @@ def profile_detail(request, username=None):
             return redirect("blog:login")
         profile_user = request.user
 
-    return render(request, "profile/detail.html", {"profile_user": profile_user})
+    # 🔹 Traer posts de este usuario (solo publicados)
+    user_posts = Post.objects.filter(author=profile_user, status="published").order_by("-created")
+
+    return render(request, "profile/detail.html", {
+        "profile_user": profile_user,
+        "user_posts": user_posts,   # 👈 aquí mandamos los posts
+    })
+
 
 
 # --------- Auth ----------
@@ -207,7 +214,7 @@ class PostDetailView(DetailView):
         post = self.object
         user = self.request.user
 
-        # 🔹 Reseñas (solo principales = sin parent)
+        # 🔹 Reseñas
         if user.is_authenticated and (user == post.author or user.is_staff):
             ctx["reviews"] = post.reviews.filter(parent__isnull=True)
             ctx["is_owner"] = True
@@ -223,16 +230,12 @@ class PostDetailView(DetailView):
 
         # 🔹 Formularios
         ctx["review_form"] = ReviewForm()
-        # ctx["comment_form"] = CommentForm()
 
-        # 🔹 Suscripciones (autor + tags)
+        # 🔹 Suscripciones
         if user.is_authenticated:
-            # Autor
             ctx["author_subscribed"] = Subscription.objects.filter(
                 user=user, author=post.author
             ).exists()
-
-            # Tags
             tag_slugs = post.tags.values_list("slug", flat=True)
             subs = Subscription.objects.filter(user=user, tag__slug__in=tag_slugs)
             ctx["subscribed_tag_slugs"] = set(subs.values_list("tag__slug", flat=True))
@@ -240,7 +243,17 @@ class PostDetailView(DetailView):
             ctx["author_subscribed"] = False
             ctx["subscribed_tag_slugs"] = set()
 
+        # ✅ Extras necesarios para navbar y notificaciones
+        ctx["all_tags"] = Tag.objects.all()
+        if user.is_authenticated:
+            ctx["unread_count"] = user.notifications.filter(is_read=False).count()
+            ctx["notifications"] = user.notifications.all().order_by("-created_at")[:8]
+        else:
+            ctx["unread_count"] = 0
+            ctx["notifications"] = []
+
         return ctx
+
 
 
 def procesar_menciones(comentario, actor, post):
@@ -342,9 +355,17 @@ def post_detail(request, slug):
         "object": post,
         "reviews": reviews,
         "is_owner": request.user == post.author,
-        "reaction_counts": reaction_counts, 
+        "reaction_counts": reaction_counts,
+        # ✅ Extras para que la campana funcione en post_detail
+        "all_tags": Tag.objects.all(),
+        "unread_count": request.user.notifications.filter(is_read=False).count()
+                        if request.user.is_authenticated else 0,
     }
     return render(request, "blog/post_detail.html", context)
+
+
+
+
 
 def post_by_platform(request, platform_slug):
     posts = Post.objects.filter(platform=platform_slug)

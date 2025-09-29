@@ -8,8 +8,7 @@
   <h1 class="mb-1">{{ object.title }}</h1>
   <div class="post-meta">
     por 
-    <a href="{% url 'blog:profile_detail' object.author.username %}" class="username">
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+      <a href="{% url 'blog:profile_detail' object.author.username %}" class="username">
       <strong>{{ object.author.username }}</strong>
     </a> 
     · {{ object.created|date:"d/m/Y g:i a" }}
@@ -31,25 +30,25 @@
 
 
 <div class="mt-2 d-flex flex-wrap align-items-center gap-2">
- {% for t in object.tags.all %}
-  <span class="badge text-bg-secondary">#{{ t.name }}</span>
+  {% for t in object.tags.all %}
+    <span class="badge text-bg-secondary">#{{ t.name }}</span>
 
-  {% if user.is_authenticated %}
-    <form method="post" action="{% url 'blog:subscribe_tag' t.slug %}" class="d-inline">
-      {% csrf_token %}
-      <input type="hidden" name="next" value="{{ request.get_full_path }}">
-      {% if t.slug in subscribed_tag_slugs %}
-        <button class="btn btn-danger btn-sm">❌ Dejar de seguir</button>
-      {% else %}
-        <button class="btn btn-outline-primary btn-sm">➕ Seguir</button>
-      {% endif %}
-    </form>
-  {% endif %}
-{% empty %}
-  <small class="text-muted">Sin tags</small>
-{% endfor %}
-
+    {% if user.is_authenticated and user != object.author %}
+      <form method="post" action="{% url 'blog:subscribe_tag' t.slug %}" class="d-inline">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% if t.slug in subscribed_tag_slugs %}
+          <button class="btn btn-danger btn-sm">❌ Dejar de seguir</button>
+        {% else %}
+          <button class="btn btn-outline-primary btn-sm">➕ Seguir</button>
+        {% endif %}
+      </form>
+    {% endif %}
+  {% empty %}
+    <small class="text-muted">Sin tags</small>
+  {% endfor %}
 </div>
+
 
 
 

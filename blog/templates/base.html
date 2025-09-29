@@ -331,15 +331,15 @@
                data-bs-toggle="dropdown" aria-expanded="false">
               🔔
               {% if user.is_authenticated and unread_count > 0 %}
-                <span class="badge bg-danger">
+                <span class="badge bg-danger">{{ unread_count }}</span>
                   {% if unread_count > 9 %}9+{% else %}{{ unread_count }}{% endif %}
-                </span>
+          
               {% endif %}
             </a>
 
             <ul class="dropdown-menu dropdown-menu-end p-2 notif-dropdown" aria-labelledby="notifDropdown">
               {% if request.user.is_authenticated %}
-                {% for n in request.user.notifications.all|slice:":8" %}
+                  {% for n in notifications %}
                   <li class="notif-item {% if not n.is_read %}unread{% endif %}">
                     <img src="{% if n.actor.profile.avatar %}{{ n.actor.profile.avatar.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
                          class="notif-avatar" alt="Avatar">
