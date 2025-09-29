@@ -8,6 +8,7 @@ whitenoise
 gunicorn>=21.2.0
 tzdata>=2023.3
 djangorestframework
+pytest
 django-taggit>=5.0.1
 gunicorn
 whitenoise
