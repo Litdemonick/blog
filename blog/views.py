@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.models import User
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from .models import Comment, PostBlock
 from taggit.models import Tag
 from django.shortcuts import render, get_object_or_404
@@ -17,11 +17,27 @@ from django.shortcuts import render
 from .models import Post
 from .models import Post
 import re
+import json
 from .models import Notification
 from .models import Post, Comment, Review, ReviewVote, PostBlock
 from .forms import SignUpForm, PostForm, ReviewForm, ProfileForm
-
-
+from .models import Post, Reaction, REACTION_CHOICES
+from .models import Post, Reaction, REACTION_CHOICES
+from django.db.models import Count
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.contrib.auth.decorators import login_required
+from .serializers import ReactionSerializer
+from .models import CommentVote
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+import logging
+from .api_views import ReactionView
+from django.db.models import Q
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+import pytest
 from .models import (
     Post, Comment, Review, ReviewVote,
     PostBlock, Notification, NotificationBlock
@@ -104,9 +120,25 @@ def pin_review(request, review_id):
     return redirect("blog:post_detail", slug=review.post.slug)
 
 
+logger = logging.getLogger(__name__)
+
 @login_required
 def unpin_review(request, review_id):
-    review = get_object_or_404(Review, id=review_id)
+    # buscar en vez de usar get() directo
+    reviews_qs = Review.objects.filter(id=review_id).order_by('-created')
+    count = reviews_qs.count()
+
+    if count == 0:
+        raise Http404("Review no encontrada")
+
+    if count > 1:
+        # Logueamos el problema para revisarlo/depurarlo después
+        logger.warning("MultipleObjectsReturned al buscar Review id=%s: %d resultados", review_id, count)
+        # tomamos la más reciente para trabajar y evitamos el 500
+        review = reviews_qs.first()
+    else:
+        review = reviews_qs.first()
+
     if request.user == review.post.author:
         review.pinned = False
         review.save()
@@ -117,6 +149,7 @@ def unpin_review(request, review_id):
 
 
 # --------- Listado / Búsqueda / Paginación ----------
+from django.db.models import Count, Q
 class PostListView(ListView):
     model = Post
     template_name = 'post_list.html'
@@ -133,6 +166,32 @@ class PostListView(ListView):
             qs = qs.filter(tags__slug=tag)
         return qs.select_related('author').prefetch_related('tags')
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # posts puede estar en ctx['posts'] (context_object_name) o en ctx['object_list']
+        posts = ctx.get(self.context_object_name) or ctx.get('object_list') or []
+        # si está paginado, posts es la lista de objetos de la página; construimos ids
+        post_ids = [p.id for p in posts]
+
+        if post_ids:
+            qs = (
+                Reaction.objects
+                .filter(post_id__in=post_ids)
+                .values('post_id', 'type')
+                .annotate(count=Count('id'))
+            )
+            counts_map = {}
+            for r in qs:
+                pid = r['post_id']
+                counts_map.setdefault(pid, {})[r['type']] = r['count']
+        else:
+            counts_map = {}
+
+        # Adjuntar reaction_counts (diccionario) a cada post
+        for p in posts:
+            p.reaction_counts = counts_map.get(p.id, {})
+
+        return ctx
 
 # --------- Detalle / Reseñas / Comentarios ----------
 class PostDetailView(DetailView):
@@ -256,16 +315,19 @@ def post_detail(request, slug):
     post = get_object_or_404(Post, slug=slug, status="published")
     reviews = post.reviews.filter(parent__isnull=True, status="visible")
 
+    # Conteos de reacciones
+    counts = Reaction.objects.filter(post=post).values("type").annotate(total=Count("id"))
+    reaction_counts = {c["type"]: c["total"] for c in counts}
+    for key, _ in REACTION_CHOICES:
+        reaction_counts.setdefault(key, 0)
+
     context = {
         "object": post,
         "reviews": reviews,
         "is_owner": request.user == post.author,
+        "reaction_counts": reaction_counts, 
     }
     return render(request, "blog/post_detail.html", context)
-
-
-
-
 
 def post_by_platform(request, platform_slug):
     posts = Post.objects.filter(platform=platform_slug)
@@ -504,3 +566,344 @@ def vote_comment(request, pk, vote_type):
 
     return redirect(comment.post.get_absolute_url())
 
+# --------- Reacciones (emojis) ----------
+from .models import Reaction
+@login_required
+def toggle_reaction(request, post_id):
+    post = Post.objects.get(id=post_id)
+    reaction_type = request.POST.get("reaction")
+
+    existing = Reaction.objects.filter(user=request.user, post=post).first()
+
+    if existing:
+        if existing.type == reaction_type:
+            # si el user repite la misma → se elimina
+            existing.delete()
+        else:
+            # si cambia → se actualiza
+            existing.type = reaction_type
+            existing.save()
+    else:
+        # nueva reacción
+        Reaction.objects.create(user=request.user, post=post, type=reaction_type)
+
+    # devolver conteo actualizado
+    counts = {r[0]: post.reactions.filter(type=r[0]).count() for r in dict(Reaction._meta.get_field("type").choices)}
+
+    return JsonResponse({"success": True, "counts": counts})
+# --------- Endpoint AJAX para reacciones ----------
+from .models import Reaction
+from django.utils import timezone
+from django.db.models import Count
+
+@require_POST
+@login_required
+def react_api(request):
+    """
+    Recibe JSON { post, type, rating? }.
+    - Crea/actualiza Reaction (post,user)
+    - Crea/actualiza Review automático (post,user) con texto 'Reacción automática: {type}'
+    - Devuelve counts y review_html + review_id
+    NO crea ni devuelve comentarios (para evitar que aparezcan en la sección Comentarios).
+    """
+    # parse JSON
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return HttpResponseBadRequest("Invalid JSON")
+
+    post_id = data.get('post')
+    rtype = data.get('type')
+    rating = data.get('rating', 5)
+
+    if not post_id or not rtype:
+        return HttpResponseBadRequest("Missing 'post' or 'type'")
+
+    # validar tipo de reacción (ajusta REACTION_CHOICES si se llama distinto)
+    valid_types = set(dict(REACTION_CHOICES).keys())
+    if rtype not in valid_types:
+        return HttpResponseBadRequest("Invalid reaction type")
+
+    # obtener post
+    try:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
+        return HttpResponseBadRequest("Post not found")
+
+    # crear/actualizar Reaction
+    try:
+        with transaction.atomic():
+            reaction, created = Reaction.objects.update_or_create(
+                post=post,
+                user=request.user,
+                defaults={'type': rtype}
+            )
+    except Reaction.MultipleObjectsReturned:
+        qs = Reaction.objects.filter(post=post, user=request.user).order_by('id')
+        reaction = qs.first()
+        qs.exclude(id=reaction.id).delete()
+        reaction.type = rtype
+        reaction.save()
+        created = False
+
+    # crear/actualizar Review automático (asegurando que solo exista 1)
+    try:
+        with transaction.atomic():
+            rev_qs = Review.objects.filter(post=post, user=request.user).order_by('id')
+            if rev_qs.exists():
+                review = rev_qs.first()
+                # actualizar solo si es una reseña automática o está vacía
+                if (not review.comment) or review.comment.startswith('Reacción automática:'):
+                    review.comment = f'Reacción automática: {rtype}'
+                    review.rating = rating
+                    review.save(update_fields=['comment', 'rating'])
+            else:
+                review = Review.objects.create(
+                    post=post,
+                    user=request.user,
+                    comment=f'Reacción automática: {rtype}',
+                    rating=rating,
+                    created=timezone.now(),
+                    status='visible'
+                )
+    except Review.MultipleObjectsReturned:
+        qs = Review.objects.filter(post=post, user=request.user).order_by('id')
+        review = qs.first()
+        qs.exclude(id=review.id).delete()
+        if (not review.comment) or review.comment.startswith('Reacción automática:'):
+            review.comment = f'Reacción automática: {rtype}'
+            review.rating = rating
+            review.save(update_fields=['comment', 'rating'])
+
+    # recompute reaction counts por tipo
+    qs_counts = Reaction.objects.filter(post=post).values('type').annotate(count=Count('id'))
+    counts = {r['type']: r['count'] for r in qs_counts}
+    for t in valid_types:
+        counts.setdefault(t, 0)
+
+    # renderizar HTML parcial de review (usa tu partial que refleje la UI de reseñas)
+    # Asegúrate de tener templates/blog/partials/review_item.html
+    review_html = render_to_string('blog/partials/review_item.html', {'r': review, 'user': request.user})
+
+    return JsonResponse({
+        'status': 'ok',
+        'counts': counts,
+        'review_html': review_html,
+        'review_id': review.id,
+        "counts": counts,
+    })
+
+def _find_auto_comment_qs(post, user):
+    """
+    Devuelve un queryset de comentarios que parecen ser comentarios automáticos
+    de reacción para este (post, user). No lanzamos si el campo no existe.
+    """
+    qs_list = []
+    try:
+        qs_list.append(Comment.objects.filter(post=post, author=user))
+    except Exception:
+        pass
+    try:
+        qs_list.append(Comment.objects.filter(post=post, user=user))
+    except Exception:
+        pass
+
+    # Filtrar por texto indicativo de "reacción automática"
+    combined_q = None
+    for qs in qs_list:
+        try:
+            q = qs.filter(Q(text__startswith='Reacción automática:') | Q(text__icontains='reaccionó con'))
+            if combined_q is None:
+                combined_q = q
+            else:
+                combined_q = combined_q | q
+        except Exception:
+            # tal vez el campo se llama 'content' o 'text' no existe
+            try:
+                q2 = qs.filter(Q(content__startswith='Reacción automática:') | Q(content__icontains='reaccionó con'))
+                if combined_q is None:
+                    combined_q = q2
+                else:
+                    combined_q = combined_q | q2
+            except Exception:
+                pass
+
+    return combined_q if combined_q is not None else Comment.objects.none()
+
+
+def _upsert_reaction_comment(post, user, text):
+    """
+    Crea o actualiza un comment marcado como 'is_reaction' para (post,user).
+    Devuelve la instancia Comment.
+    NOTA: ajusta campos (author/text/status) según tu modelo si se llaman distinto.
+    """
+    qs = Comment.objects.filter(post=post, author=user, is_reaction=True)
+    if qs.exists():
+        comment = qs.first()
+        comment.text = text
+        comment.status = "visible"
+        comment.is_reaction = True
+        comment.created = comment.created or timezone.now()
+        comment.save(update_fields=['text', 'status', 'is_reaction'])
+        return comment
+    # crear nuevo
+    return Comment.objects.create(
+        post=post,
+        author=user,
+        text=text,
+        status="visible",
+        is_reaction=True,
+        created=timezone.now()
+    )
+
+
+def _delete_reaction_comment(post, user):
+    """Elimina comment automático si existe (usa si implementas toggle off)."""
+    Comment.objects.filter(post=post, author=user, is_reaction=True).delete()
+
+# ---------- toggle_reaction (actualiza para borrar comentario si la reacción se elimina) ----------
+@login_required
+def toggle_reaction(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    reaction_type = request.POST.get("reaction")
+
+    existing = Reaction.objects.filter(user=request.user, post=post).first()
+
+    if existing:
+        if existing.type == reaction_type:
+            # Repite la misma → se elimina la reacción y el comentario automático
+            existing.delete()
+            _delete_reaction_comment(post, request.user)
+        else:
+            # Cambia → actualizamos reacción + comentario automático
+            existing.type = reaction_type
+            existing.save()
+            _upsert_reaction_comment(post, request.user, f"Reacción automática: {reaction_type}")
+    else:
+        # Nueva → crear reacción + comentario automático
+        Reaction.objects.create(user=request.user, post=post, type=reaction_type)
+        _upsert_reaction_comment(post, request.user, f"Reacción automática: {reaction_type}")
+
+    # devolver conteos
+    valid_types = set(dict(REACTION_CHOICES).keys())
+    counts = {r[0]: post.reactions.filter(type=r[0]).count()
+              for r in dict(Reaction._meta.get_field("type").choices)}
+    return JsonResponse({"success": True, "counts": counts})
+
+
+
+# ---------- react_api (función AJAX) ----------
+@login_required
+def react_api(request):
+    """
+    Endpoint AJAX que crea/actualiza la reacción del usuario a un post,
+    y crea/actualiza un comentario automático (en lugar de crear duplicados).
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'authentication required'}, status=403)
+
+    # parsear JSON
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return HttpResponseBadRequest("Invalid JSON")
+
+    post_id = data.get('post')
+    rtype = data.get('type')
+    rating = data.get('rating', 5)
+
+    if not post_id or not rtype:
+        return HttpResponseBadRequest("Missing 'post' or 'type'")
+
+    valid_types = set(dict(REACTION_CHOICES).keys())
+    if rtype not in valid_types:
+        return HttpResponseBadRequest("Invalid reaction type")
+
+    try:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
+        return HttpResponseBadRequest("Post not found")
+
+    # crear o actualizar la reacción (manejo de duplicados ya lo hicimos antes)
+    from django.db import transaction
+    try:
+        with transaction.atomic():
+            reaction, created = Reaction.objects.update_or_create(
+                post=post,
+                user=request.user,
+                defaults={'type': rtype}
+            )
+    except Reaction.MultipleObjectsReturned:
+        qs = Reaction.objects.filter(post=post, user=request.user).order_by('id')
+        reaction = qs.first()
+        qs.exclude(id=reaction.id).delete()
+        reaction.type = rtype
+        reaction.save()
+        created = False
+
+    # Crear o actualizar el comentario automático (no crear duplicados)
+    emoji = dict(REACTION_CHOICES).get(rtype, "👍")
+    review_text = f"{request.user.username} reaccionó {emoji}"
+    comment_text = f"Reacción automática: {emoji}"  # <-- usa el emoji aquí
+    _upsert_reaction_comment(post, request.user, comment_text)
+    
+    # devolver conteos actualizados por tipo
+    qs = Reaction.objects.filter(post=post).values('type').annotate(count=Count('id'))
+    counts = {r['type']: r['count'] for r in qs}
+    for t in valid_types:
+        counts.setdefault(t, 0)
+
+    return JsonResponse({
+        'counts': counts,
+        'redirect_url': post.get_absolute_url() + "#comments"
+    })
+
+
+# ---------- ReactionView (DRF) ----------
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+
+class ReactionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        post_id = request.data.get("post")
+        if not post_id:
+            return Response({"error": "Se requiere el ID del post"}, status=status.HTTP_400_BAD_REQUEST)
+
+        post = get_object_or_404(Post, id=post_id)
+
+        serializer = ReactionSerializer(
+            data=request.data,
+            context={"request": request, "post": post}
+        )
+        serializer.is_valid(raise_exception=True)
+        reaction = serializer.save()
+
+        # 🔹 En vez de comentario → reseña
+        review_text = f"{request.user.username} reaccionó con {reaction.type}"
+        _upsert_reaction_review(post, request.user, review_text)
+
+        return Response(ReactionSerializer(reaction).data, status=status.HTTP_201_CREATED)
+
+    from django.http import JsonResponse, HttpResponseBadRequest
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+
+@login_required
+def reaction_users(request, post_id, reaction_type):
+    """
+    Devuelve en JSON todos los usuarios que reaccionaron con un emoji específico.
+    """
+    valid_types = set(dict(REACTION_CHOICES).keys())
+    if reaction_type not in valid_types:
+        return HttpResponseBadRequest("Invalid reaction type")
+
+    post = get_object_or_404(Post, id=post_id)
+    reactions = Reaction.objects.filter(post=post, type=reaction_type).select_related("user")
+
+    users = [r.user.username for r in reactions]
+    return JsonResponse({"users": users})

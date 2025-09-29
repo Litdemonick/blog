@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.core.validators import MinValueValidator, MaxValueValidator
 from ckeditor_uploader.fields import RichTextUploadingField
 from taggit.managers import TaggableManager
+from django.utils import timezone
 
 
 # ----------------------------
@@ -119,9 +120,11 @@ class Comment(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="comments"
     )
-    text = models.TextField()
+    text = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     created = models.DateTimeField(auto_now_add=True)
+    
+    is_reaction = models.BooleanField(default=True)
 
     # 🔹 Nuevo: relación para respuestas
     parent = models.ForeignKey(
@@ -303,3 +306,31 @@ class Notification(models.Model):
         elif self.target_post:
             return self.target_post.get_absolute_url()
         return "#"
+
+
+# ----------------------------
+# Reacciones (emojis) en posts
+# ----------------------------
+# Opciones de reacciones (emojis)
+REACTION_CHOICES = [
+    ('like', '👍'),
+    ('love', ''),
+    ('funny', '😂'),
+    ('wow', '😮'),
+    ('sad', '😢'),
+    ('angry', '😡'),
+]
+class Reaction(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="reactions")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reactions")
+    type = models.CharField(max_length=10, choices=REACTION_CHOICES)
+    rating = models.IntegerField(null=True, blank=True)   # 👈 opcional
+    opinion = models.TextField(null=True, blank=True)  # 👈 opcional
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("post", "user")  # 👈 un usuario solo puede reaccionar una vez a un post
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} reaccionó {self.type} a {self.post}"
