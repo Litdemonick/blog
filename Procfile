@@ -1,2 +1,2 @@
-release: python manage.py migrate && python manage.py loaddata backup.json
+release: python manage.py migrate --noinput
 web: gunicorn myblog.wsgi --bind 0.0.0.0:8080
