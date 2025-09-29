@@ -18,6 +18,9 @@ from django.db.models import Q
 # ----------------------------
 from django.templatetags.static import static
 
+from django.db import models
+from django.contrib.auth.models import User
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
@@ -52,15 +55,17 @@ class Profile(models.Model):
     def get_avatar_url(self):
         """
         Devuelve la URL del avatar:
-        - Si existe avatar subido -> Cloudinary o MEDIA_URL.
-        - Si no existe o hay error -> fallback en static/img/default-avatar.png.
+        - Si existe avatar subido -> usa Cloudinary o MEDIA_URL.
+        - Si no existe o hay error -> usa fallback en Cloudinary (default-avatar).
         """
         if self.avatar:
             try:
                 return self.avatar.url
             except Exception:
                 pass
-        return static("img/default-avatar.png")
+        # 🔹 Fallback Cloudinary
+        return "https://res.cloudinary.com/dnsxdraop/image/upload/v1759167107/default-avatar_hebe3h.png"
+
 
 # ----------------------------
 # Post (noticia o rumor)
