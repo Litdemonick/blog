@@ -138,18 +138,6 @@ class Comment(models.Model):
     # 🔹 Nuevo: moderador puede fijar comentarios
     pinned = models.BooleanField(default=False)
 
-    # 🔹 Nuevo: relación para respuestas
-    parent = models.ForeignKey(
-        "self",
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="replies"
-    )
-
-    # 🔹 Nuevo: moderador puede fijar comentarios
-    pinned = models.BooleanField(default=False)
-
     class Meta:
         ordering = ["-pinned", "-created"]  # 👈 fijados arriba, luego por fecha
 
@@ -318,8 +306,6 @@ class Notification(models.Model):
         elif self.target_post:
             return self.target_post.get_absolute_url()
         return "#"
-<<<<<<< HEAD
-=======
 
 
 # ----------------------------
@@ -348,4 +334,3 @@ class Reaction(models.Model):
 
     def __str__(self):
         return f"{self.user.username} reaccionó {self.type} a {self.post}"
->>>>>>> origin/main

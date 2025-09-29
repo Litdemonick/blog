@@ -18,10 +18,7 @@ from django.shortcuts import render
 from .models import Post
 from .models import Post
 import re
-<<<<<<< HEAD
-=======
 import json
->>>>>>> origin/main
 from .models import Notification
 from .models import Post, Comment, Review, ReviewVote, PostBlock
 from .forms import SignUpForm, PostForm, ReviewForm, ProfileForm
@@ -41,19 +38,6 @@ from .api_views import ReactionView
 from django.db.models import Q
 from django.utils import timezone
 from django.views.decorators.http import require_POST
-
-from .models import (
-    Post, Comment, Review, ReviewVote,
-    PostBlock, Notification, NotificationBlock
-)
-
-
-@login_required
-def mark_all_notifications_read(request):
-    if request.method == "POST":
-        request.user.notifications.filter(is_read=False).update(is_read=True)
-        return JsonResponse({"status": "ok"})
-    return JsonResponse({"status": "error"}, status=400)
 
 from .models import (
     Post, Comment, Review, ReviewVote,
@@ -137,11 +121,6 @@ def pin_review(request, review_id):
     return redirect("blog:post_detail", slug=review.post.slug)
 
 
-<<<<<<< HEAD
-@login_required
-def unpin_review(request, review_id):
-    review = get_object_or_404(Review, id=review_id)
-=======
 logger = logging.getLogger(__name__)
 
 @login_required
@@ -161,7 +140,6 @@ def unpin_review(request, review_id):
     else:
         review = reviews_qs.first()
 
->>>>>>> origin/main
     if request.user == review.post.author:
         review.pinned = False
         review.save()
@@ -338,33 +316,20 @@ def post_detail(request, slug):
     post = get_object_or_404(Post, slug=slug, status="published")
     reviews = post.reviews.filter(parent__isnull=True, status="visible")
 
-<<<<<<< HEAD
-=======
     # Conteos de reacciones
     counts = Reaction.objects.filter(post=post).values("type").annotate(total=Count("id"))
     reaction_counts = {c["type"]: c["total"] for c in counts}
     for key, _ in REACTION_CHOICES:
         reaction_counts.setdefault(key, 0)
 
->>>>>>> origin/main
     context = {
         "object": post,
         "reviews": reviews,
         "is_owner": request.user == post.author,
-<<<<<<< HEAD
-    }
-    return render(request, "blog/post_detail.html", context)
-
-
-
-
-
-=======
         "reaction_counts": reaction_counts, 
     }
     return render(request, "blog/post_detail.html", context)
 
->>>>>>> origin/main
 def post_by_platform(request, platform_slug):
     posts = Post.objects.filter(platform=platform_slug)
     return render(request, "post_list.html", {
@@ -602,8 +567,6 @@ def vote_comment(request, pk, vote_type):
 
     return redirect(comment.post.get_absolute_url())
 
-<<<<<<< HEAD
-=======
 # --------- Reacciones (emojis) ----------
 from .models import Reaction
 @login_required
@@ -945,4 +908,3 @@ def reaction_users(request, post_id, reaction_type):
 
     users = [r.user.username for r in reactions]
     return JsonResponse({"users": users})
->>>>>>> origin/main

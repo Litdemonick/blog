@@ -3,10 +3,7 @@ from django.contrib.auth import views as auth_views
 from . import views
 from django.urls import path
 from . import views
-<<<<<<< HEAD
-=======
 from .views import ReactionView
->>>>>>> origin/main
 
 app_name = "blog"
 
@@ -27,9 +24,6 @@ urlpatterns = [
     
     path("post/<int:post_id>/reaction-users/<str:reaction_type>/", views.reaction_users, name="reaction_users"),
     
-    # --------- Plataformas ----------
-    path("plataforma/<str:platform_slug>/", views.post_by_platform, name="post_by_platform"),
-
     # --------- Plataformas ----------
     path("plataforma/<str:platform_slug>/", views.post_by_platform, name="post_by_platform"),
 
