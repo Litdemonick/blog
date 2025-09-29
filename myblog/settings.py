@@ -136,8 +136,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'   # para collectstatic en prod
 STATICFILES_DIRS = [BASE_DIR / "static"] # ✅ aquí cargas tus íconos (ej: static/img/pc.png)
 
-# ⚡ Importante para producción con Whitenoise
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 STATICFILES_STORAGE = "blog.static_overrides.NoHashStaticFilesStorage"
 
