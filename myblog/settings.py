@@ -138,7 +138,9 @@ STATICFILES_DIRS = [BASE_DIR / "static"] # ✅ aquí cargas tus íconos (ej: sta
 
 
 
-STATICFILES_STORAGE = "blog.static_overrides.NoHashStaticFilesStorage"
+# 🚀 Servir estáticos tal cual, sin hashes
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+
 
 
 
