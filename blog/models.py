@@ -12,6 +12,7 @@ from django.db.models import Q
 
 
 
+
 # ----------------------------
 # Perfil de usuario
 # ----------------------------
@@ -47,10 +48,18 @@ class Profile(models.Model):
     def __str__(self):
         return f'Perfil de {self.user.username}'
 
+    @property
     def get_avatar_url(self):
-        """Devuelve la URL del avatar o el default si no existe."""
-        if self.avatar and hasattr(self.avatar, "url"):
-            return self.avatar.url
+        """
+        Devuelve la URL del avatar:
+        - Si existe avatar subido -> Cloudinary o MEDIA_URL.
+        - Si no existe o hay error -> fallback en static/img/default-avatar.png.
+        """
+        if self.avatar:
+            try:
+                return self.avatar.url
+            except Exception:
+                pass
         return static("img/default-avatar.png")
 
 # ----------------------------
